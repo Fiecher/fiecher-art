@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+:root {
+    --color-primary: rgba(11, 10, 9, 1);
+    --color-secondary: rgba(223, 225, 215, 1);
+    --color-accent: rgba(255, 64, 0, 1);
+
+    --font-main: 'Bebas Neue', sans-serif;
+}
+
+body {
+    background-color: var(--color-primary);
+    color: var(--color-secondary);
+}
+
+.poster-wrapper {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    overflow: hidden;
+}
+
+.poster {
+    aspect-ratio: 2 / 3;
+    height: 100vh;
+    max-width: 100vw;
+    background: var(--color-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+/* SvelteKit рендерит страницу как прямой дочерний div внутри .poster —
+   растягиваем его на всю доступную высоту */
+.poster > * {
+    flex: 1;
+    min-height: 0;
+}

@@ -1,12 +1,18 @@
 node_modules
-
-# Output
+.svelte-kit
+/build
 .output
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# Deploy
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
+
+# Logs
+*.log
 
 # OS
 .DS_Store
@@ -17,6 +23,9 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+
+# Coverage
+coverage
 
 # Vite
 vite.config.js.timestamp-*
