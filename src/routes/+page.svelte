@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WorkspaceFrame from '$lib/components/layout/WorkspaceFrame.svelte';
+	import WorkspaceFrame from '$lib/components/layout/Workspace.svelte';
 	import Menu from '$lib/components/sections/Menu.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import FilmStrip from '$lib/components/sections/FilmStrip.svelte';
@@ -10,9 +10,11 @@
 		<Menu />
 	</header>
 
-	<WorkspaceFrame>
-		<FilmStrip />
-	</WorkspaceFrame>
+	<div class="page-frame">
+		<WorkspaceFrame>
+			фывыфв
+		</WorkspaceFrame>
+	</div>
 
 	<footer class="page-footer">
 		<Footer />
@@ -25,13 +27,19 @@
 		flex-direction: column;
 		width: 100%;
 		flex: 1;
-		min-height: 0;
+		min-height: 600px;
 	}
 
 	.page-header {
-		flex-shrink: 0;
-		padding: 20px;
+		padding: 20px 23px 0px 23px;
 	}
+
+	.page-frame {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
 
 	.page-footer {
 		flex-shrink: 0;
