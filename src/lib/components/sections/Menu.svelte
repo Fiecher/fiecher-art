@@ -1,122 +1,133 @@
-<script lang="ts">
-    import type { NavigationItems } from '$lib/types';
+<script lang='ts'>
+  import type { NavigationItems } from '$lib/types'
 
-    const MENU_ITEMS: NavigationItems = ['REEL', 'WORKS', 'CONTACT'] as const;
-    const PADDING_OFFSET = 40;
-    const GAP_SIZE = 24;
+  const MENU_ITEMS: NavigationItems = ['REEL', 'WORKS', 'CONTACT'] as const
+  type MenuItem = (typeof MENU_ITEMS)[number]
 
-    let active = $state<string>(MENU_ITEMS[0]);
-    let isDropdownOpen = $state(false);
-    let isCollapsed = $state(false);
-    let dropdownHeight = $state(0);
+  const PADDING_OFFSET = 40
+  const GAP_SIZE = 24
 
-    let measureEl: HTMLUListElement | null = null;
-    let dropdownEl = $state<HTMLUListElement | null>(null);
+  const { activeItem, onSelect } = $props()
 
-    function checkMenuOverflow(): void {
-        if (!measureEl) return;
+  let active = $state<MenuItem>(MENU_ITEMS[0])
+  let isDropdownOpen = $state(false)
+  let isCollapsed = $state(false)
+  let dropdownHeight = $state(0)
 
-        const navElement = measureEl.closest('nav') as HTMLElement | null;
-        if (!navElement) return;
+  let measureEl: HTMLUListElement | null = null
+  let dropdownEl = $state<HTMLUListElement | null>(null)
 
-        const availableWidth = navElement.clientWidth - PADDING_OFFSET;
-        let totalWidth = 0;
+  function checkMenuOverflow(): void {
+    if (!measureEl)
+      return
 
-        measureEl.querySelectorAll('li').forEach((li) => {
-            totalWidth += (li as HTMLElement).scrollWidth;
-        });
+    const navElement = measureEl.closest('nav') as HTMLElement | null
+    if (!navElement)
+      return
 
-        totalWidth += (MENU_ITEMS.length - 1) * GAP_SIZE;
-        isCollapsed = totalWidth > availableWidth;
+    const availableWidth = navElement.clientWidth - PADDING_OFFSET
+    let totalWidth = 0
+
+    measureEl.querySelectorAll('li').forEach((li) => {
+      totalWidth += (li as HTMLElement).scrollWidth
+    })
+
+    totalWidth += (MENU_ITEMS.length - 1) * GAP_SIZE
+    isCollapsed = totalWidth > availableWidth
+  }
+
+  function selectMenuItem(item: MenuItem): void {
+    active = item
+    isDropdownOpen = false;
+    (onSelect as ((value: MenuItem) => void) | undefined)?.(item)
+  }
+
+  $effect(() => {
+    active = (activeItem as MenuItem | undefined) ?? MENU_ITEMS[0]
+  })
+
+  $effect(() => {
+    if (!measureEl)
+      return
+
+    const navElement = measureEl.closest('nav') as HTMLElement | null
+    if (!navElement)
+      return
+
+    const resizeObserver = new ResizeObserver(checkMenuOverflow)
+    resizeObserver.observe(navElement)
+    checkMenuOverflow()
+
+    return () => resizeObserver.disconnect()
+  })
+
+  $effect(() => {
+    if (dropdownEl) {
+      dropdownHeight = dropdownEl.scrollHeight
     }
-
-    
-    function selectMenuItem(item: string): void {
-        active = item;
-        isDropdownOpen = false;
-        
-    }
-
-    $effect(() => {
-        if (!measureEl) return;
-
-        const navElement = measureEl.closest('nav') as HTMLElement | null;
-        if (!navElement) return;
-
-        const resizeObserver = new ResizeObserver(checkMenuOverflow);
-        resizeObserver.observe(navElement);
-        checkMenuOverflow();
-
-        return () => resizeObserver.disconnect();
-    });
-
-    $effect(() => {
-        if (dropdownEl) {
-            dropdownHeight = dropdownEl.scrollHeight;
-        }
-    });
+  })
 </script>
 
 <nav
-    class="menu"
-    class:menu--open={isDropdownOpen && isCollapsed}
-    style={isDropdownOpen && isCollapsed ? `--dropdown-height: ${dropdownHeight}px` : ''}
+  class='menu'
+  class:menu--open={isDropdownOpen && isCollapsed}
+  style={isDropdownOpen && isCollapsed ? `--dropdown-height: ${dropdownHeight}px` : ''}
 >
-    <div
-        class="menu-border"
-        class:menu-border--expanded={isDropdownOpen && isCollapsed}
-    ></div>
+  <div
+    class='menu-border'
+    class:menu-border--expanded={isDropdownOpen && isCollapsed}
+  ></div>
 
-    <ul class="menu-list menu-list--measure" bind:this={measureEl} aria-hidden="true">
-        {#each MENU_ITEMS as item}
-            <li><span class="menu-text">{item}</span></li>
-        {/each}
+  <ul class='menu-list menu-list--measure' bind:this={measureEl} aria-hidden='true'>
+    {#each MENU_ITEMS as item}
+      <li><span class='menu-text'>{item}</span></li>
+    {/each}
+  </ul>
+
+  {#if !isCollapsed}
+    <ul class='menu-list'>
+      {#each MENU_ITEMS as item}
+        <li>
+          <button
+            class='menu-text'
+            class:menu-text--active={item === active}
+            onclick={() => selectMenuItem(item)}
+            type='button'
+          >{item}</button>
+        </li>
+      {/each}
     </ul>
+  {:else}
+    <div class='menu-collapsed'>
+      <button
+        class='menu-trigger'
+        onclick={() => (isDropdownOpen = !isDropdownOpen)}
+        aria-expanded={isDropdownOpen}
+        type='button'
+      >
+        <span
+          class='menu-text menu-text--active'
+          class:menu-text--open={isDropdownOpen}
+        >{active}</span>
+      </button>
 
-    {#if !isCollapsed}
-        <ul class="menu-list">
-            {#each MENU_ITEMS as item}
-                <li>
-                    <button
-                        class="menu-text"
-                        class:menu-text--active={item === active}
-                        onclick={() => (active = item)}
-                        type="button"
-                    >{item}</button>
-                </li>
+      <div class='menu-dropdown-grid' class:menu-dropdown-grid--open={isDropdownOpen}>
+        <div class='menu-dropdown-overflow'>
+          <ul class='menu-dropdown' bind:this={dropdownEl}>
+            {#each MENU_ITEMS.filter((i) => i !== active) as item}
+              <li>
+                <button
+                  class='menu-text menu-dropdown-item'
+                  onclick={() => selectMenuItem(item)}
+                  type='button'
+                >{item}</button>
+              </li>
             {/each}
-        </ul>
-    {:else}
-        <div class="menu-collapsed">
-            <button
-                class="menu-trigger"
-                onclick={() => (isDropdownOpen = !isDropdownOpen)}
-                aria-expanded={isDropdownOpen}
-                type="button"
-            >
-                <span
-                    class="menu-text menu-text--active"
-                    class:menu-text--open={isDropdownOpen}
-                >{active}</span>
-            </button>
-
-            <div class="menu-dropdown-grid" class:menu-dropdown-grid--open={isDropdownOpen}>
-                <div class="menu-dropdown-overflow">
-                    <ul class="menu-dropdown" bind:this={dropdownEl}>
-                        {#each MENU_ITEMS.filter((i) => i !== active) as item}
-                            <li>
-                                <button
-                                    class="menu-text menu-dropdown-item"
-                                    onclick={() => selectMenuItem(item)}
-                                    type="button"
-                                >{item}</button>
-                            </li>
-                        {/each}
-                    </ul>
-                </div>
-            </div>
+          </ul>
         </div>
-    {/if}
+      </div>
+    </div>
+  {/if}
 </nav>
 
 <style>
@@ -288,7 +299,6 @@
         transform: scale(1.03);
     }
 
-    
     .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
     .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after {
         width: 0;
