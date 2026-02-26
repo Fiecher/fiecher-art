@@ -50,7 +50,7 @@
 <style>
 	.footer {
 		background-color: var(--color-primary);
-		padding: 12px 16px;
+		padding: 0px 4rem;
 	}
 
 	.footer-grid {
@@ -85,13 +85,35 @@
 	}
 
 	.footer-label {
-		font-size: 15px;
+		font-size: 0.9rem;
 		font-weight: 400;
 	}
 
 	.footer-value {
-		font-size: 25px;
+		font-size: 1.5rem;
 		font-weight: 400;
 	}
+
+	@media (max-width: 600px) or (max-height: 900px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .footer-cell {
+        display: none;
+    }
+
+    .footer-cell:nth-child(2) {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+        padding: 8px 0;
+    }
+
+    .footer-cell:nth-child(2) .footer-text-block {
+        justify-content: center;
+    }
+}
 
 </style>
