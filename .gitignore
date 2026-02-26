@@ -2,9 +2,7 @@ node_modules
 .svelte-kit
 /build
 .output
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
+.vscode
 
 # Deploy
 .vercel
