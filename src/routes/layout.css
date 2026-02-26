@@ -8,6 +8,20 @@
     --color-accent: rgba(255, 64, 0, 1);
 
     --font-main: 'Bebas Neue', sans-serif;
+    --font-secondary: 'Trade Gothic LT Std', Arial, sans-serif;
+
+    --transition-fast: 0.15s ease-in-out;
+    --transition-normal: 0.2s ease;
+    --transition-medium: 0.3s ease;
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+
+    --text-menu-lg: 5rem;
+    --text-menu-sm: 4rem;
 }
 
 body {
@@ -34,8 +48,6 @@ body {
     flex-direction: column;
 }
 
-/* SvelteKit рендерит страницу как прямой дочерний div внутри .poster —
-   растягиваем его на всю доступную высоту */
 .poster > * {
     flex: 1;
     min-height: 0;
