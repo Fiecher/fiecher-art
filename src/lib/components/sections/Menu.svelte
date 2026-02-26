@@ -124,7 +124,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 20px 70px;
+        padding: 20px;
         position: relative;
         width: 100%;
         box-sizing: border-box;
@@ -142,7 +142,7 @@
 
     .menu-list {
         display: flex;
-        gap: 1.5rem;
+        gap: 2rem;
         list-style: none;
         margin: 0;
         padding: 0;
@@ -215,22 +215,22 @@
 
     .menu-trigger:hover .menu-text::before {
         width: 50%;
-        transform: translateY(2px) rotate(4deg);
+        transform: translateY(5px) rotate(4deg);
     }
 
     .menu-trigger:hover .menu-text::after {
         width: 50%;
-        transform: translateY(2px) rotate(-4deg);
+        transform: translateY(5px) rotate(-4deg);
     }
 
     .menu-text--open::before {
         width: 50%;
-        transform: translateY(2px) rotate(4deg);
+        transform: translateY(5px) rotate(4deg);
     }
 
     .menu-text--open::after {
         width: 50%;
-        transform: translateY(2px) rotate(-4deg);
+        transform: translateY(5px) rotate(-4deg);
     }
 
     .menu-collapsed {
@@ -286,6 +286,12 @@
     .menu-dropdown-item:hover {
 
         transform: scale(1.03);
+    }
+
+    
+    .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
+    .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after {
+        width: 0;
     }
 
     @media (max-width: 768px) {
