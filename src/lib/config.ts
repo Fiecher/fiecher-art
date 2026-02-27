@@ -1,4 +1,3 @@
-// src/lib/config.ts
 import type { FilmStripConfig } from '$lib/types'
 
 export const APP_CONFIG = {
@@ -17,11 +16,6 @@ export const APP_CONFIG = {
     telegramChannel: 'https://t.me/yourmomchannel',
     behance: 'https://behance.net/yourmom',
   },
-//   filmStrip: {
-//     cellsPerRow: 3,
-//     rows: 2,
-//     maxWidth: '480px',
-//   } satisfies Partial<FilmStripConfig>,
 } as const
 
 export default APP_CONFIG

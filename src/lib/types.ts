@@ -16,4 +16,5 @@ export interface FilmStripConfig {
 export interface FooterItem {
   label: string
   value: string | string[]
+  href?: string | (string | null)[]
 }
