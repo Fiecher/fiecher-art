@@ -1,5 +1,3 @@
-import type { FilmStripConfig } from '$lib/types'
-
 export const APP_CONFIG = {
   name: 'fiecher-art',
   version: '0.0.1',

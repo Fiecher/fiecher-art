@@ -1,6 +1,6 @@
 import { get, writable } from 'svelte/store'
 
-export const SECTIONS = ['REEL', 'WORKS', 'CONTACT'] as const
+export const SECTIONS = ['REEL', 'WORKS', 'INFO'] as const
 export type Section = (typeof SECTIONS)[number]
 
 function sectionToSlug(section: Section) {
