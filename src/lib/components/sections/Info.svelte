@@ -37,6 +37,7 @@
 
 <style>
   .credits {
+    margin: 10px;
     padding: 0 3rem;
     width: 100%;
     box-sizing: border-box;
@@ -96,19 +97,4 @@
     opacity: 1;
   }
 
-  @media (max-width: 600px) {
-    .credits {
-      padding-inline: 16px;
-    }
-
-    .credits-row {
-      grid-template-columns: 1fr;
-      line-height: 1.4;
-      margin-bottom: 6px;
-    }
-
-    .credits-role {
-      text-align: left;
-    }
-  }
 </style>
