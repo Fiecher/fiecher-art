@@ -37,7 +37,6 @@
 
 <style>
   .credits {
-    margin-top: 12px;
     padding: 0 3rem;
     width: 100%;
     box-sizing: border-box;
