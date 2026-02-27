@@ -1,119 +1,109 @@
 <script lang='ts'>
-  import type { FooterItem } from '$lib/types'
+  import APP_CONFIG from '$lib/config'
 
-  const defaultItems: FooterItem[] = [
-    {
-      label: 'made by',
-      value: 'Stepan Belebezev',
-    },
-    {
-      label: 'contact via',
-      value: ['Mail', 'Telegram'],
-    },
-    {
-      label: 'hosted on',
-      value: 'Github Pages',
-    },
-    {
-      label: 'all rights reserved',
-      value: new Date().getFullYear().toString(),
-    },
-  ]
-
-  const { items = defaultItems } = $props()
-
-  function normalizeValue(value: string | string[]): string[] {
-    return Array.isArray(value) ? value : [value]
-  }
+  const { onContactOpen }: { onContactOpen: () => void } = $props()
 </script>
 
-<footer class='footer'>
-  <div class='footer-grid'>
-    {#each items as item, index (index)}
-      <div class='footer-cell' class:footer-cell--right={index % 2 === 1}>
-        <div class='footer-text-block'>
-          <span class='footer-label'>{item.label}&nbsp;</span>
-
-          {#each normalizeValue(item.value) as value, valueIndex}
-            <span class='footer-value'>{value}</span>
-
-            {#if valueIndex < normalizeValue(item.value).length - 1}
-              <span class='footer-label'>&nbsp;or&nbsp;</span>
-            {/if}
-          {/each}
-        </div>
-      </div>
-    {/each}
-  </div>
-</footer>
+<button class='footer-block' onclick={onContactOpen} type='button'>
+  <span class='footer-line'>
+    <span class='footer-large'>Insomnia Creative</span>
+    <span class='footer-small'>presents</span>
+  </span>
+  <span class='footer-line'>
+    <span class='footer-small'>a</span>
+    <span class='footer-large'>Fiecher</span>
+    <span class='footer-small'>production</span>
+  </span>
+  <span class='footer-line'>
+    <span class='footer-large'>{APP_CONFIG.author.name}</span>
+    <span class='footer-small'> portfolio</span>
+  </span>
+  <span class='footer-line'>
+    <span class='footer-small'>contact via</span>
+    <span class='footer-large'>Mail</span>
+    <span class='footer-small'>or</span>
+    <span class='footer-large'>Telegram</span>
+  </span>
+  <span class='footer-line'>
+    <span class='footer-small'>check out studio's</span>
+    <span class='footer-large'>YouTube Channel</span>
+  </span>
+  <span class='footer-line'>
+    <span class='footer-small'>follow author's</span>
+    <span class='footer-large'>ArtStation,</span>
+    <span class='footer-large'>Telegram Channel</span>
+    <span class='footer-small'>&</span>
+    <span class='footer-large'>Behance</span>
+  </span>
+  <span class='footer-sep'>·</span>
+  <span class='footer-line'>
+    <span class='footer-small'>© {new Date().getFullYear()}</span>
+  </span>
+</button>
 
 <style>
-  .footer {
-    background-color: var(--color-primary);
-    padding: 0px 4rem;
-  }
-
-  .footer-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, auto);
-    gap: 10px 20px;
-  }
-
-  .footer-cell {
-    display: flex;
-    align-items: baseline;
-    font-family: var(--font-secondary);
-    color: var(--color-secondary);
-    text-transform: uppercase;
-    letter-spacing: -0.5px;
-  }
-
-  .footer-cell--right {
-    justify-content: flex-end;
-    text-align: right;
-  }
-
-  .footer-text-block {
+  .footer-block {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
+    justify-content: center;
+    gap: 0 0.4rem;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+    font-family: var(--font-secondary);
+    text-transform: uppercase;
+    color: var(--color-secondary);
+    letter-spacing: 0.02em;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
   }
 
-  .footer-cell--right .footer-text-block {
-    justify-content: flex-end;
+  .footer-block:hover {
+    opacity: 1;
   }
 
-  .footer-label {
-    font-size: 0.9rem;
-    font-weight: 400;
+  .footer-line {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    white-space: nowrap;
   }
 
-  .footer-value {
-    font-size: 1.5rem;
-    font-weight: 400;
+  .footer-small {
+    font-size: 0.75rem;
+    opacity: 0.5;
+  }
+
+  .footer-large {
+    font-size: 1.1rem;
+  }
+
+  .footer-sep {
+    font-size: 0.75rem;
+    opacity: 0.25;
+    align-self: center;
   }
 
   @media (max-width: 600px) or (max-height: 900px) {
-    .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 0;
-    }
 
-    .footer-cell {
-        display: none;
-    }
+    .footer-block .footer-line,
+  .footer-block .footer-sep {
+    display: none;
+  }
 
-    .footer-cell:nth-child(2) {
-        display: flex;
-        justify-content: center;
-        text-align: center;
-        padding: 8px 0;
-    }
+  .footer-block .footer-line:nth-of-type(1),
+  .footer-block .footer-line:nth-of-type(3),
+  .footer-block .footer-line:last-of-type {
+    display: inline-flex;
+  }
 
-    .footer-cell:nth-child(2) .footer-text-block {
-        justify-content: center;
-    }
-}
-
+  .footer-block .footer-sep:nth-of-type(1),
+  .footer-block .footer-sep:nth-of-type(2) {
+    display: inline;
+  }
+  }
 </style>
