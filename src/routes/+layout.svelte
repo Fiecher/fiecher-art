@@ -17,3 +17,24 @@
     <Scrollbar active={$activeSection} />
   </div>
 </div>
+
+<style>
+.poster-wrapper {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    overflow: hidden;
+}
+
+.poster {
+    aspect-ratio: 2 / 3;
+    height: 100vh;
+    max-width: 100vw;
+    background: var(--color-primary);
+    display: flex;
+    flex-direction: column;
+}
+</style>

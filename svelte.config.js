@@ -1,13 +1,18 @@
+import process from 'node:process'
 import adapter from '@sveltejs/adapter-auto'
 import { mdsvex } from 'mdsvex'
+
+const dev = process.argv.includes('dev')
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
-    // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-    // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-    // See https://svelte.dev/docs/kit/adapters for more information about adapters.
-    adapter: adapter(),
+    adapter: adapter({
+      fallback: '404.html',
+    }),
+    paths: {
+      base: dev ? '' : '/fiecher-art',
+    },
   },
   preprocess: [mdsvex()],
   extensions: ['.svelte', '.svx'],
