@@ -1,6 +1,20 @@
 @import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
+
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('/fonts/BebasNeue.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Trade Gothic LT Std';
+  src: url('/fonts/TradeGothicLTStd.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --color-primary: rgba(11, 10, 9, 1);
@@ -13,13 +27,8 @@
 
 body {
   background-color: var(--color-primary);
-}
-
-
-@media (max-width: 768px) {
-  .workspace-wrapper { padding-inline: 16px; }
-  .footer-wrapper { padding-inline: 16px; }
-  .works-title { font-size: 3rem; }
+  min-width: 360px;
+  min-height: 640px;
 }
 
 .page-shell {
@@ -33,4 +42,10 @@ body {
 
 .page-header {
   padding: 20px 23px 0 23px;
+}
+
+@media (max-width: 768px) {
+  .workspace-wrapper { padding-inline: 16px; }
+  .footer-wrapper { padding-inline: 16px; }
+  .works-title { font-size: 3rem; }
 }
