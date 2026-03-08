@@ -38,7 +38,7 @@
 <style>
   .credits {
     margin: 10px;
-    padding: 0 3rem;
+    padding: 0 clamp(1rem, 0.673rem + 1.454vw, 3rem);
     width: 100%;
     box-sizing: border-box;
   }
@@ -46,14 +46,14 @@
   .credits-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 1.6rem;
+    column-gap: clamp(0.75rem, 0.611rem + 0.618vw, 1.6rem);
     align-items: baseline;
     line-height: 1.6;
   }
 
   .credits-role {
     font-family: var(--font-secondary);
-    font-size: 1.4rem;
+    font-size: clamp(1.1rem, 0.909rem + 0.432vw, 1.6rem);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-secondary);
@@ -64,7 +64,7 @@
 
   .credits-name {
     font-family: var(--font-secondary);
-    font-size: 1.85rem;
+    font-size: clamp(1.5rem, 1.182rem + 0.636vw, 2.2rem);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;

@@ -1,20 +1,21 @@
-export type MenuItem = string
+export interface WorkMedia {
+  type: 'video' | 'image'
+  src: string
+  poster?: string
+  caption?: string
+}
 
-export type NavigationItems = readonly MenuItem[]
+export interface Work {
+  id: string
+  title: string
+  description?: string
+  year?: number
+  main: WorkMedia
+  wip?: WorkMedia[]
+}
 
 export interface FilmCell {
   id: string
-  content?: string
-}
-
-export interface FilmStripConfig {
-  cells: FilmCell[]
-  rows?: number
-  maxWidth?: string
-}
-
-export interface FooterItem {
-  label: string
-  value: string | string[]
-  href?: string | (string | null)[]
+  title?: string
+  image?: string
 }

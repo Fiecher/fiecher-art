@@ -1,10 +1,12 @@
 <script lang='ts'>
-  const { children } = $props()
+  import type { Snippet } from 'svelte'
+
+  const { children }: { children?: Snippet } = $props()
 </script>
 
 <div class='workspace-frame'>
   <main class='workspace-main'>
-    {@render children()}
+    {@render children?.()}
   </main>
 </div>
 
@@ -22,7 +24,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
   }
 
   @media (max-width: 1279px) {

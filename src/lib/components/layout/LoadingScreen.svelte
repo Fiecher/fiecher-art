@@ -2,11 +2,10 @@
   interface Props { onDone: () => void }
   const { onDone }: Props = $props()
 
-  import { WORK_SETS } from '$lib/works'
+  import { WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
-  const POSTER_URLS = WORK_SETS
-    .flatMap(s => s.works)
+  const POSTER_URLS = WORKS
     .map(w => w.main.poster ?? w.main.src)
     .filter((src, i, arr) => arr.indexOf(src) === i)
 

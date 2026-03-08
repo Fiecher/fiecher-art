@@ -48,7 +48,7 @@
     align-items: baseline;
     justify-content: center;
     gap: 0 0.4rem;
-    padding: 0;
+    padding: 0px 0px 20px 00px;
     background: none;
     border: none;
     cursor: pointer;
@@ -74,16 +74,16 @@
   }
 
   .footer-small {
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
     opacity: 0.5;
   }
 
   .footer-large {
-    font-size: 1.1rem;
+    font-size: clamp(1.0625rem, 0.864rem + 0.398vw, 1.5rem);
   }
 
   .footer-sep {
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
     opacity: 0.25;
     align-self: center;
   }

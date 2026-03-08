@@ -2,32 +2,13 @@
   import { SECTIONS } from '$lib/navigation'
   import type { Section } from '$lib/navigation'
 
-  const PADDING_OFFSET = 40
-  const GAP_SIZE = 24
-
   const { activeItem, onSelect }: { activeItem: Section, onSelect: (s: Section) => void } = $props()
 
   let active = $state<Section>(SECTIONS[0])
   let isDropdownOpen = $state(false)
-  let isCollapsed = $state(false)
   let dropdownHeight = $state(0)
 
-  let measureEl: HTMLUListElement | null = null
   let dropdownEl = $state<HTMLUListElement | null>(null)
-
-  function checkMenuOverflow(): void {
-    if (!measureEl)
-      return
-    const navEl = measureEl.closest('nav') as HTMLElement | null
-    if (!navEl)
-      return
-
-    const availableWidth = navEl.clientWidth - PADDING_OFFSET
-    let totalWidth = 0
-    measureEl.querySelectorAll('li').forEach((li) => (totalWidth += (li as HTMLElement).scrollWidth))
-    totalWidth += (SECTIONS.length - 1) * GAP_SIZE
-    isCollapsed = totalWidth > availableWidth
-  }
 
   function selectMenuItem(item: Section): void {
     active = item
@@ -40,18 +21,6 @@
   })
 
   $effect(() => {
-    if (!measureEl)
-      return
-    const navEl = measureEl.closest('nav') as HTMLElement | null
-    if (!navEl)
-      return
-    const ro = new ResizeObserver(checkMenuOverflow)
-    ro.observe(navEl)
-    checkMenuOverflow()
-    return () => ro.disconnect()
-  })
-
-  $effect(() => {
     if (dropdownEl)
       dropdownHeight = dropdownEl.scrollHeight
   })
@@ -59,54 +28,61 @@
 
 <nav
   class='menu'
-  class:menu--open={isDropdownOpen && isCollapsed}
-  style={isDropdownOpen && isCollapsed ? `--dropdown-height: ${dropdownHeight}px` : ''}
+  style={isDropdownOpen ? `--dropdown-height: ${dropdownHeight}px` : ''}
 >
-  <div class='menu-border' class:menu-border--expanded={isDropdownOpen && isCollapsed}></div>
+  <div class='menu-border'></div>
 
-  <ul class='menu-list menu-list--measure' bind:this={measureEl} aria-hidden='true'>
+  <ul class='menu-list'>
     {#each SECTIONS as item}
-      <li><span class='menu-text'>{item}</span></li>
+      <li>
+        <button
+          class='menu-text'
+          class:menu-text--active={item === active}
+          onclick={() => selectMenuItem(item)}
+          type='button'
+        >{item}</button>
+      </li>
     {/each}
   </ul>
 
-  {#if !isCollapsed}
-    <ul class='menu-list'>
-      {#each SECTIONS as item}
-        <li>
-          <button
-            class='menu-text'
-            class:menu-text--active={item === active}
-            onclick={() => selectMenuItem(item)}
-            type='button'
-          >{item}</button>
-        </li>
-      {/each}
-    </ul>
-  {:else}
-    <div class='menu-collapsed'>
-      <button
-        class='menu-trigger'
-        onclick={() => (isDropdownOpen = !isDropdownOpen)}
-        aria-expanded={isDropdownOpen}
-        type='button'
+  <div class='menu-collapsed'>
+    <button
+      class='menu-trigger'
+      onclick={() => (isDropdownOpen = !isDropdownOpen)}
+      aria-expanded={isDropdownOpen}
+      type='button'
+    >
+      <span class='menu-text menu-text--active'>{active}</span>
+      <svg
+        class='menu-arrow'
+        class:menu-arrow--open={isDropdownOpen}
+        viewBox='0 0 100 60'
+        fill='none'
+        aria-hidden='true'
+        preserveAspectRatio='xMidYMid meet'
       >
-        <span class='menu-text menu-text--active' class:menu-text--open={isDropdownOpen}>{active}</span>
-      </button>
+        <polyline
+          points='10,10 50,50 90,10'
+          stroke='currentColor'
+          stroke-width='12'
+          stroke-linecap='square'
+          stroke-linejoin='miter'
+        />
+      </svg>
+    </button>
 
-      <div class='menu-dropdown-grid' class:menu-dropdown-grid--open={isDropdownOpen}>
-        <div class='menu-dropdown-overflow'>
-          <ul class='menu-dropdown' bind:this={dropdownEl}>
-            {#each SECTIONS.filter((i) => i !== active) as item}
-              <li>
-                <button class='menu-text menu-dropdown-item' onclick={() => selectMenuItem(item)} type='button'>{item}</button>
-              </li>
-            {/each}
-          </ul>
-        </div>
+    <div class='menu-dropdown-grid' class:menu-dropdown-grid--open={isDropdownOpen}>
+      <div class='menu-dropdown-overflow'>
+        <ul class='menu-dropdown' bind:this={dropdownEl}>
+          {#each SECTIONS.filter((i) => i !== active) as item}
+            <li>
+              <button class='menu-text menu-dropdown-item' onclick={() => selectMenuItem(item)} type='button'>{item}</button>
+            </li>
+          {/each}
+        </ul>
       </div>
     </div>
-  {/if}
+  </div>
 </nav>
 
 <style>
@@ -119,20 +95,20 @@
     width: 100%;
     box-sizing: border-box;
     --dropdown-height: 0px;
-    transition: margin-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    container-type: inline-size;
   }
 
   .menu-border {
     position: absolute;
     inset: -3px -3px 0 -3px;
-    border: 0.5rem solid var(--color-secondary);
+    border: clamp(0.3rem, 0.245rem + 0.114vw, 0.5rem) solid var(--color-secondary);
     pointer-events: none;
     z-index: 2;
   }
 
   .menu-list {
     display: flex;
-    gap: 2rem;
+    gap: clamp(1.5rem, 1.227rem + 0.568vw, 2rem);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -140,16 +116,24 @@
     z-index: 1;
   }
 
-  .menu-list--measure {
-    position: absolute;
-    visibility: hidden;
-    pointer-events: none;
-    white-space: nowrap;
+  .menu-collapsed {
+    display: none;
+    position: relative;
+    z-index: 1;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    overflow: visible;
+  }
+
+  @container (max-width: 560px) {
+    .menu-list { display: none; }
+    .menu-collapsed { display: flex; }
   }
 
   .menu-text {
     font-family: var(--font-main);
-    font-size: 5rem;
+    font-size: clamp(2.5rem, 11cqi, 5rem);
     font-weight: 400;
     line-height: 1;
     margin: 0;
@@ -185,28 +169,39 @@
   .menu-text:hover { transform: scale(1.05); }
   .menu-trigger:hover .menu-text { transform: none; }
 
-  .menu-trigger:hover .menu-text::before { width: 50%; transform: translateY(5px) rotate(4deg); }
-  .menu-trigger:hover .menu-text::after { width: 50%; transform: translateY(5px) rotate(-4deg); }
-
-  .menu-text--open::before { width: 50%; transform: translateY(5px) rotate(4deg); }
-  .menu-text--open::after { width: 50%; transform: translateY(5px) rotate(-4deg); }
-
-  .menu-collapsed {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-
   .menu-trigger {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    position: relative;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 0 0.85em;
+    font-size: clamp(2.5rem, 11cqi, 5rem);
+    overflow: visible;
+  }
+
+  .menu-arrow {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 0.65em;
+    height: 0.38em;
+    color: var(--color-secondary);
+    transform: translateY(-50%);
+    transition:
+      transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.25s ease 0.07s;
+    opacity: 1;
+  }
+
+  .menu-arrow--open {
+    transform: translateY(calc(-50% + 200%));
+    opacity: 0;
+    transition:
+      transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s ease;
   }
 
   .menu-dropdown-grid {
@@ -229,11 +224,14 @@
     gap: 0.25rem;
   }
 
-  .menu-dropdown-item { font-size: 5rem; transition: transform 0.2s ease; }
+  .menu-dropdown-item { font-size: clamp(2.5rem, 11cqi, 5rem); transition: transform 0.2s ease; }
   .menu-dropdown-item:hover { transform: scale(1.03); }
 
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { width: 0; }
+
+  .menu-collapsed:has(.menu-dropdown-item:hover) .menu-text--active::before,
+  .menu-collapsed:has(.menu-dropdown-item:hover) .menu-text--active::after { width: 0; }
 
   @media (max-width: 768px) {
     .menu { padding-inline: 16px; }

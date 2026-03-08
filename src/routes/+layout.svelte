@@ -1,7 +1,7 @@
 <script lang='ts'>
   import LoadingScreen from '$lib/components/layout/LoadingScreen.svelte'
   import WorkModal from '$lib/components/layout/WorkModal.svelte'
-  import { activeSection, globalProgress, goToSection, progressToTarget, TOTAL_STEPS } from '$lib/navigation'
+  import { activeSection, globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
   import './layout.css'
 
   const { children } = $props()
@@ -17,21 +17,40 @@
   const MIN_H = 580
 
   let scrollEl = $state<HTMLElement | undefined>()
-  let viewportH = $state(typeof window !== 'undefined' ? window.innerHeight : 900)
+  let viewportH = $state(0)
   let isTooSmall = $state(false)
+
+  $effect(() => {
+    viewportH = window.innerHeight
+    isTooSmall = window.innerWidth < MIN_W || window.innerHeight < MIN_H
+  })
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
 
-  function syncScrollbar(step: number) {
+  let programmaticScroll = false
+  let programmaticTimer = 0
+
+  function syncScrollbar(progress: number) {
     if (!scrollEl || isTooSmall)
       return
-    const target = Math.round(step) * STEP_PX
+    const target = Math.round(progress * TOTAL_STEPS) * STEP_PX
     if (Math.abs(scrollEl.scrollTop - target) < 2)
       return
+
+    programmaticScroll = true
+    clearTimeout(programmaticTimer)
+    programmaticTimer = window.setTimeout(() => {
+      programmaticScroll = false
+    }, 700)
+
     scrollEl.scrollTo({ top: target, behavior: 'smooth' })
   }
 
-  $effect(() => syncScrollbar($globalProgress * TOTAL_STEPS))
+  $effect(() => {
+    const progress = $globalProgress
+    void $worksPage
+    syncScrollbar(progress)
+  })
 
   $effect(() => {
     if (!scrollEl)
@@ -47,12 +66,12 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || isTooSmall)
+    if (!scrollEl || isTooSmall || programmaticScroll)
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
-    const { section, setSlug } = progressToTarget(clamped / TOTAL_STEPS)
-    goToSection(section, setSlug ?? null)
+    const { section, pageIndex } = progressToTarget(clamped / TOTAL_STEPS)
+    goToSection(section, pageIndex ?? null)
   }
 
   let wheelPending = false
@@ -77,8 +96,8 @@
     if (next === current)
       return
 
-    const { section, setSlug } = progressToTarget(next / TOTAL_STEPS)
-    goToSection(section, setSlug ?? null)
+    const { section, pageIndex } = progressToTarget(next / TOTAL_STEPS)
+    goToSection(section, pageIndex ?? null)
   }
 
   const SWIPE_MIN_PX = 45
@@ -115,8 +134,8 @@
     if (next === current)
       return
 
-    const { section, setSlug } = progressToTarget(next / TOTAL_STEPS)
-    goToSection(section, setSlug ?? null)
+    const { section: nextSection, pageIndex: nextPage } = progressToTarget(next / TOTAL_STEPS)
+    goToSection(nextSection, nextPage ?? null)
   }
 </script>
 
@@ -151,10 +170,10 @@
 
 <style>
   .scroll-wrapper {
-    width: 100vw;
+    width: 100%;
     height: 100vh;
     overflow-y: scroll;
-    overflow-x: hidden;
+    overflow-x: clip;
     background: var(--color-primary);
     transition: opacity 0.4s ease;
   }
@@ -168,6 +187,7 @@
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
+    overflow-x: clip;
   }
 
   .scroll-phantom {
@@ -193,7 +213,7 @@
   .poster {
     aspect-ratio: 2 / 3;
     height: 100vh;
-    max-width: 100vw;
+    max-width: 100%;
     background: var(--color-primary);
     display: flex;
     flex-direction: column;
@@ -204,6 +224,6 @@
     height: auto;
     min-height: 100svh;
     width: 100%;
-    max-width: 100vw;
+    max-width: 100%;
   }
 </style>
