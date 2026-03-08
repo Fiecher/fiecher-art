@@ -13,16 +13,12 @@
   }
 
   const STEP_PX = 500
-  const MIN_W = 360
-  const MIN_H = 580
 
   let scrollEl = $state<HTMLElement | undefined>()
   let viewportH = $state(0)
-  let isTooSmall = $state(false)
 
   $effect(() => {
     viewportH = window.innerHeight
-    isTooSmall = window.innerWidth < MIN_W || window.innerHeight < MIN_H
   })
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
@@ -31,7 +27,7 @@
   let programmaticTimer = 0
 
   function syncScrollbar(progress: number) {
-    if (!scrollEl || isTooSmall)
+    if (!scrollEl)
       return
     const target = Math.round(progress * TOTAL_STEPS) * STEP_PX
     if (Math.abs(scrollEl.scrollTop - target) < 2)
@@ -66,7 +62,7 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || isTooSmall || programmaticScroll)
+    if (!scrollEl || programmaticScroll)
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
@@ -77,8 +73,6 @@
   let wheelPending = false
 
   function onWheel(e: WheelEvent) {
-    if (isTooSmall)
-      return
     e.preventDefault()
     if (wheelPending)
       return
@@ -110,8 +104,6 @@
   }
 
   function onTouchEnd(e: TouchEvent) {
-    if (isTooSmall)
-      return
     if (Date.now() - touch.t > SWIPE_MAX_MS)
       return
 
@@ -142,7 +134,6 @@
 <svelte:window
   onresize={() => {
     viewportH = window.innerHeight
-    isTooSmall = window.innerWidth < MIN_W || window.innerHeight < MIN_H
   }}
 />
 
@@ -153,13 +144,12 @@
 <div
   class='scroll-wrapper'
   class:is-hidden={!loaded}
-  class:is-normal={isTooSmall}
   bind:this={scrollEl}
   onscrollend={onScrollEnd}
 >
-  <div class='scroll-phantom' style={isTooSmall ? '' : `height:${phantomH}px`}>
-    <div class='poster-sticky' class:is-normal={isTooSmall}>
-      <div class='poster' class:is-normal={isTooSmall}>
+  <div class='scroll-phantom' style={`height:${phantomH}px`}>
+    <div class='poster-sticky'>
+      <div class='poster'>
         {@render children()}
       </div>
     </div>
@@ -183,13 +173,6 @@
     pointer-events: none;
   }
 
-  .scroll-wrapper.is-normal {
-    height: auto;
-    min-height: 100vh;
-    overflow-y: auto;
-    overflow-x: clip;
-  }
-
   .scroll-phantom {
     position: relative;
     width: 100%;
@@ -204,12 +187,6 @@
     overflow: hidden;
   }
 
-  .poster-sticky.is-normal {
-    position: static;
-    height: auto;
-    min-height: 100svh;
-  }
-
   .poster {
     aspect-ratio: 2 / 3;
     height: 100vh;
@@ -217,13 +194,5 @@
     background: var(--color-primary);
     display: flex;
     flex-direction: column;
-  }
-
-  .poster.is-normal {
-    aspect-ratio: unset;
-    height: auto;
-    min-height: 100svh;
-    width: 100%;
-    max-width: 100%;
   }
 </style>

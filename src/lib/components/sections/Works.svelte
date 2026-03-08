@@ -24,12 +24,10 @@
   let stageEl = $state<HTMLElement | null>(null)
   let cellSize = $state(200)
   let stageH = $state(0)
-  let stageW = $state(0)
 
   function updateSizes(w: number, h: number) {
     if (w <= 0 || h <= 0)
       return
-    stageW = w
     stageH = h
     const ideal = Math.floor(w / CELLS_VISIBLE)
     cellSize = Math.max(CELL_MIN, Math.min(CELL_MAX, ideal))
