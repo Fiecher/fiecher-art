@@ -1,7 +1,9 @@
 <script lang='ts'>
   import LoadingScreen from '$lib/components/layout/LoadingScreen.svelte'
   import WorkModal from '$lib/components/layout/WorkModal.svelte'
+  import { modalCell } from '$lib/modal'
   import { activeSection, globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import { get } from 'svelte/store'
   import './layout.css'
 
   const { children } = $props()
@@ -18,7 +20,7 @@
   let viewportH = $state(0)
 
   $effect(() => {
-    viewportH = window.innerHeight
+    viewportH = window.visualViewport?.height ?? window.innerHeight
   })
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
@@ -62,7 +64,7 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || programmaticScroll)
+    if (!scrollEl || programmaticScroll || get(modalCell))
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
@@ -74,6 +76,8 @@
 
   function onWheel(e: WheelEvent) {
     e.preventDefault()
+    if (get(modalCell))
+      return
     if (wheelPending)
       return
     wheelPending = true
@@ -104,6 +108,8 @@
   }
 
   function onTouchEnd(e: TouchEvent) {
+    if (get(modalCell))
+      return
     if (Date.now() - touch.t > SWIPE_MAX_MS)
       return
 
@@ -133,7 +139,7 @@
 
 <svelte:window
   onresize={() => {
-    viewportH = window.innerHeight
+    viewportH = window.visualViewport?.height ?? window.innerHeight
   }}
 />
 
@@ -161,7 +167,7 @@
 <style>
   .scroll-wrapper {
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     overflow-y: scroll;
     overflow-x: clip;
     background: var(--color-primary);
@@ -181,7 +187,7 @@
   .poster-sticky {
     position: sticky;
     top: 0;
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     justify-content: center;
     overflow: hidden;
@@ -189,7 +195,7 @@
 
   .poster {
     aspect-ratio: 2 / 3;
-    height: 100vh;
+    height: 100dvh;
     max-width: 100%;
     background: var(--color-primary);
     display: flex;
