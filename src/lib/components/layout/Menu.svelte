@@ -6,9 +6,11 @@
 
   let active = $state<Section>(SECTIONS[0])
   let isDropdownOpen = $state(false)
-  let dropdownHeight = $state(0)
 
-  let dropdownEl = $state<HTMLUListElement | null>(null)
+  let rowEl = $state<HTMLButtonElement | null>(null)
+  let rowHeight = $state(0)
+
+  const activeIndex = $derived(SECTIONS.indexOf(active))
 
   function selectMenuItem(item: Section): void {
     active = item
@@ -21,15 +23,18 @@
   })
 
   $effect(() => {
-    if (dropdownEl)
-      dropdownHeight = dropdownEl.scrollHeight
+    if (!rowEl)
+      return
+    const ro = new ResizeObserver(() => {
+      rowHeight = rowEl!.offsetHeight
+    })
+    ro.observe(rowEl)
+    rowHeight = rowEl.offsetHeight
+    return () => ro.disconnect()
   })
 </script>
 
-<nav
-  class='menu'
-  style={isDropdownOpen ? `--dropdown-height: ${dropdownHeight}px` : ''}
->
+<nav class='menu' class:menu--open={isDropdownOpen}>
   <div class='menu-border'></div>
 
   <ul class='menu-list'>
@@ -46,13 +51,41 @@
   </ul>
 
   <div class='menu-collapsed'>
+
+    <div
+      class='menu-mask'
+      style='--row-h: {rowHeight ? `${rowHeight}px` : '1em'}; --active-index: {activeIndex}; --total: {SECTIONS.length}'
+    >
+      <ul class='menu-col-list'>
+        <li>
+          <button
+            bind:this={rowEl}
+            class='menu-text menu-col-item'
+            class:menu-text--active={SECTIONS[0] === active}
+            onclick={() => SECTIONS[0] === active ? (isDropdownOpen = !isDropdownOpen) : selectMenuItem(SECTIONS[0])}
+            type='button'
+          >{SECTIONS[0]}</button>
+        </li>
+        {#each SECTIONS.slice(1) as item}
+          <li>
+            <button
+              class='menu-text menu-col-item'
+              class:menu-text--active={item === active}
+              onclick={() => item === active ? (isDropdownOpen = !isDropdownOpen) : selectMenuItem(item)}
+              type='button'
+            >{item}</button>
+          </li>
+        {/each}
+      </ul>
+    </div>
+
     <button
-      class='menu-trigger'
+      class='menu-arrow-btn'
       onclick={() => (isDropdownOpen = !isDropdownOpen)}
       aria-expanded={isDropdownOpen}
+      aria-label='Toggle menu'
       type='button'
     >
-      <span class='menu-text menu-text--active'>{active}</span>
       <svg
         class='menu-arrow'
         class:menu-arrow--open={isDropdownOpen}
@@ -71,17 +104,6 @@
       </svg>
     </button>
 
-    <div class='menu-dropdown-grid' class:menu-dropdown-grid--open={isDropdownOpen}>
-      <div class='menu-dropdown-overflow'>
-        <ul class='menu-dropdown' bind:this={dropdownEl}>
-          {#each SECTIONS.filter((i) => i !== active) as item}
-            <li>
-              <button class='menu-text menu-dropdown-item' onclick={() => selectMenuItem(item)} type='button'>{item}</button>
-            </li>
-          {/each}
-        </ul>
-      </div>
-    </div>
   </div>
 </nav>
 
@@ -94,7 +116,6 @@
     position: relative;
     width: 100%;
     box-sizing: border-box;
-    --dropdown-height: 0px;
     container-type: inline-size;
   }
 
@@ -116,21 +137,6 @@
     z-index: 1;
   }
 
-  .menu-collapsed {
-    display: none;
-    position: relative;
-    z-index: 1;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    overflow: visible;
-  }
-
-  @container (max-width: 560px) {
-    .menu-list { display: none; }
-    .menu-collapsed { display: flex; }
-  }
-
   .menu-text {
     font-family: var(--font-main);
     font-size: clamp(2.5rem, 11cqi, 5rem);
@@ -142,7 +148,7 @@
     text-align: center;
     display: inline-block;
     position: relative;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
     background: none;
     border: none;
     cursor: pointer;
@@ -156,82 +162,110 @@
     bottom: 2px;
     height: 0.25rem;
     background-color: var(--color-secondary);
-    transition: width 0.15s ease-in-out, transform 0.15s ease-in-out;
+    transition: width 0.15s ease-in-out;
     width: 0;
   }
 
   .menu-text::before { right: 50%; transform-origin: right bottom; }
-  .menu-text::after { left: 50%; transform-origin: left bottom; }
+  .menu-text::after  { left: 50%;  transform-origin: left bottom; }
 
   .menu-text:hover::before, .menu-text:hover::after,
   .menu-text--active::before, .menu-text--active::after { width: 50%; }
 
   .menu-text:hover { transform: scale(1.05); }
-  .menu-trigger:hover .menu-text { transform: none; }
-
-  .menu-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0 0.85em;
-    font-size: clamp(2.5rem, 11cqi, 5rem);
-    overflow: visible;
-  }
-
-  .menu-arrow {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    width: 0.65em;
-    height: 0.38em;
-    color: var(--color-secondary);
-    transform: translateY(-50%);
-    transition:
-      transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.25s ease 0.07s;
-    opacity: 1;
-  }
-
-  .menu-arrow--open {
-    transform: translateY(calc(-50% + 200%));
-    opacity: 0;
-    transition:
-      transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.2s ease;
-  }
-
-  .menu-dropdown-grid {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 100%;
-  }
-
-  .menu-dropdown-grid--open { grid-template-rows: 1fr; }
-  .menu-dropdown-overflow { overflow: hidden; min-height: 0; }
-
-  .menu-dropdown {
-    list-style: none;
-    margin: 0;
-    padding: 0.5rem 0 0.75rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .menu-dropdown-item { font-size: clamp(2.5rem, 11cqi, 5rem); transition: transform 0.2s ease; }
-  .menu-dropdown-item:hover { transform: scale(1.03); }
 
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { width: 0; }
 
-  .menu-collapsed:has(.menu-dropdown-item:hover) .menu-text--active::before,
-  .menu-collapsed:has(.menu-dropdown-item:hover) .menu-text--active::after { width: 0; }
+  .menu-collapsed {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 0.15em;
+  }
+
+  @container (max-width: 560px) {
+    .menu-list      { display: none; }
+    .menu-collapsed { display: flex; }
+  }
+
+  .menu-mask {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    max-height: var(--row-h);
+    transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu--open .menu-mask {
+    max-height: calc(var(--row-h) * var(--total) + 0.25rem * (var(--total) - 1) + 1.5rem);
+  }
+
+  .menu-col-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    transform: translateY(calc(-1 * var(--active-index) * (var(--row-h) + 0.25rem)));
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu--open .menu-col-list {
+    transform: translateY(0);
+  }
+
+  .menu-col-item { font-size: clamp(2.5rem, 11cqi, 5rem); }
+  .menu-col-item:hover { transform: scale(1.03); }
+
+  .menu:not(.menu--open) .menu-col-item::before,
+  .menu:not(.menu--open) .menu-col-item::after {
+    width: 0 !important;
+  }
+
+  .menu--open .menu-col-item.menu-text--active::before,
+  .menu--open .menu-col-item.menu-text--active::after {
+    width: 50%;
+  }
+
+  .menu--open .menu-col-item:hover::before,
+  .menu--open .menu-col-item:hover::after {
+    width: 50%;
+  }
+
+  .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::before,
+  .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::after {
+    width: 0;
+  }
+
+  .menu-arrow-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2.5rem, 11cqi, 5rem);
+    line-height: 1;
+  }
+
+  .menu-arrow {
+    display: block;
+    width: 0.65em;
+    height: 0.38em;
+    color: var(--color-secondary);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    transform: none;
+  }
+
+  .menu-arrow--open {
+    transform: rotate(180deg);
+  }
 
   @media (max-width: 768px) {
     .menu { padding-inline: 16px; }
