@@ -10,7 +10,7 @@
   let rowEl = $state<HTMLButtonElement | null>(null)
   let rowHeight = $state(0)
 
-  const activeIndex = $derived(SECTIONS.indexOf(active))
+  let activeIndex = $derived(SECTIONS.indexOf(active))
 
   function selectMenuItem(item: Section): void {
     active = item
@@ -37,6 +37,7 @@
 <nav class='menu' class:menu--open={isDropdownOpen}>
   <div class='menu-border'></div>
 
+  <!-- Desktop: horizontal list -->
   <ul class='menu-list'>
     {#each SECTIONS as item}
       <li>
@@ -50,7 +51,21 @@
     {/each}
   </ul>
 
+  <!-- Mobile -->
   <div class='menu-collapsed'>
+
+    <!--
+      Closed: entire area is one button that opens the menu.
+      Open: invisible overlay is removed so individual item buttons are clickable.
+    -->
+    {#if !isDropdownOpen}
+      <button
+        class='menu-overlay-btn'
+        onclick={() => (isDropdownOpen = true)}
+        aria-label='Open menu'
+        type='button'
+      ></button>
+    {/if}
 
     <div
       class='menu-mask'
@@ -62,8 +77,9 @@
             bind:this={rowEl}
             class='menu-text menu-col-item'
             class:menu-text--active={SECTIONS[0] === active}
-            onclick={() => SECTIONS[0] === active ? (isDropdownOpen = !isDropdownOpen) : selectMenuItem(SECTIONS[0])}
+            onclick={() => selectMenuItem(SECTIONS[0])}
             type='button'
+            tabindex={isDropdownOpen ? 0 : -1}
           >{SECTIONS[0]}</button>
         </li>
         {#each SECTIONS.slice(1) as item}
@@ -71,38 +87,42 @@
             <button
               class='menu-text menu-col-item'
               class:menu-text--active={item === active}
-              onclick={() => item === active ? (isDropdownOpen = !isDropdownOpen) : selectMenuItem(item)}
+              onclick={() => selectMenuItem(item)}
               type='button'
+              tabindex={isDropdownOpen ? 0 : -1}
             >{item}</button>
           </li>
         {/each}
       </ul>
     </div>
 
-    <button
-      class='menu-arrow-btn'
-      onclick={() => (isDropdownOpen = !isDropdownOpen)}
-      aria-expanded={isDropdownOpen}
-      aria-label='Toggle menu'
-      type='button'
-    >
-      <svg
-        class='menu-arrow'
-        class:menu-arrow--open={isDropdownOpen}
-        viewBox='0 0 100 60'
-        fill='none'
-        aria-hidden='true'
-        preserveAspectRatio='xMidYMid meet'
+    <!-- Arrow: only shown when closed, part of the overlay button visually -->
+    <div class='menu-arrow-wrap' class:menu-arrow-wrap--open={isDropdownOpen}>
+      <button
+        class='menu-arrow-btn'
+        onclick={() => (isDropdownOpen = !isDropdownOpen)}
+        aria-label='Close menu'
+        type='button'
+        tabindex={isDropdownOpen ? 0 : -1}
       >
-        <polyline
-          points='10,10 50,50 90,10'
-          stroke='currentColor'
-          stroke-width='12'
-          stroke-linecap='square'
-          stroke-linejoin='miter'
-        />
-      </svg>
-    </button>
+        <svg
+          class='menu-arrow'
+          class:menu-arrow--open={isDropdownOpen}
+          viewBox='0 0 100 60'
+          fill='none'
+          aria-hidden='true'
+          preserveAspectRatio='xMidYMid meet'
+        >
+          <polyline
+            points='10,10 50,50 90,10'
+            stroke='currentColor'
+            stroke-width='12'
+            stroke-linecap='square'
+            stroke-linejoin='miter'
+          />
+        </svg>
+      </button>
+    </div>
 
   </div>
 </nav>
@@ -169,6 +189,7 @@
   .menu-text::before { right: 50%; transform-origin: right bottom; }
   .menu-text::after  { left: 50%;  transform-origin: left bottom; }
 
+  /* Desktop underline */
   .menu-text:hover::before, .menu-text:hover::after,
   .menu-text--active::before, .menu-text--active::after { width: 50%; }
 
@@ -177,12 +198,14 @@
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { width: 0; }
 
+  /* ── Mobile ── */
   .menu-collapsed {
     display: none;
     flex-direction: column;
     align-items: center;
     width: 100%;
     gap: 0.15em;
+    position: relative;
   }
 
   @container (max-width: 560px) {
@@ -190,6 +213,21 @@
     .menu-collapsed { display: flex; }
   }
 
+  /* Transparent overlay covers everything when closed — acts as single tap target */
+  .menu-overlay-btn {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Mask ── */
   .menu-mask {
     width: 100%;
     display: flex;
@@ -203,6 +241,7 @@
     max-height: calc(var(--row-h) * var(--total) + 0.25rem * (var(--total) - 1) + 1.5rem);
   }
 
+  /* ── Vertical list ── */
   .menu-col-list {
     list-style: none;
     margin: 0;
@@ -222,24 +261,34 @@
   .menu-col-item { font-size: clamp(2.5rem, 11cqi, 5rem); }
   .menu-col-item:hover { transform: scale(1.03); }
 
+  /* Closed: no underline */
   .menu:not(.menu--open) .menu-col-item::before,
   .menu:not(.menu--open) .menu-col-item::after {
     width: 0 !important;
   }
 
+  /* Open: active underlined */
   .menu--open .menu-col-item.menu-text--active::before,
   .menu--open .menu-col-item.menu-text--active::after {
     width: 50%;
   }
 
+  /* Open: hover underline */
   .menu--open .menu-col-item:hover::before,
   .menu--open .menu-col-item:hover::after {
     width: 50%;
   }
 
+  /* Open: hovering non-active removes active underline */
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::before,
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::after {
     width: 0;
+  }
+
+  /* ── Arrow ── */
+  .menu-arrow-wrap {
+    position: relative;
+    z-index: 1;
   }
 
   .menu-arrow-btn {
@@ -259,7 +308,7 @@
     width: 0.65em;
     height: 0.38em;
     color: var(--color-secondary);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     transform: none;
   }
 
