@@ -13,6 +13,10 @@ const config = {
     paths: {
       base: dev ? '' : '/fiecher-art',
     },
+    prerender: {
+      handleUnseenRoutes: 'ignore',
+      entries: ['*', '/reel', '/works', '/info'],
+    },
   },
   preprocess: [mdsvex()],
   extensions: ['.svelte', '.svx'],
