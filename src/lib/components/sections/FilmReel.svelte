@@ -11,10 +11,12 @@
   }
 
   const { cells, cellSize, tilt = 3, entryX = 0, onCellClick }: Props = $props()
-  let localX = $state(entryX)
-  let localOpacity = $state(entryX !== 0 ? 0 : 1)
+  let localX = $state(0)
+  let localOpacity = $state(0)
 
   $effect(() => {
+    localX = entryX
+    localOpacity = entryX !== 0 ? 0 : 1
     if (entryX === 0)
       return
     requestAnimationFrame(() =>
