@@ -13,29 +13,23 @@
   })
 
   let mediaIndex = $state(-1)
+  const media = $derived<WorkMedia | undefined>(
+    mediaIndex === -1 ? displayWork?.main : displayWork?.wip?.[mediaIndex],
+  )
   $effect(() => {
     if (work)
       mediaIndex = -1
   })
 
-  const media = $derived<WorkMedia | undefined>(
-    mediaIndex === -1 ? displayWork?.main : displayWork?.wip?.[mediaIndex],
-  )
-
-  type Phase = 'idle' | 'open' | 'poster' | 'igniting' | 'loading' | 'playing' | 'closing'
+  type Phase = 'idle' | 'opening' | 'visible' | 'closing'
   let phase = $state<Phase>('idle')
-
   let screenIn = $state(false)
-  let flickerOn = $state(true)
-  let videoReady = $state(false)
+  let screenOut = $state(false)
   let videoSrc = $state<string | null>(null)
   let videoEl = $state<HTMLVideoElement | null>(null)
 
-  let flashOpacity = $state(0)
-
-  let mediaAspect = $state<number | null>(null)
-
-  const showBackdrop = $derived(phase !== 'idle')
+  let beamVisible = $state(false)
+  let beamOpacity = $state(0)
 
   let tids: number[] = []
   const clearTids = () => {
@@ -46,111 +40,46 @@
     tids.push(window.setTimeout(r, ms))
   })
 
-  let flickerRaf = 0
-  function stopFlicker() {
-    cancelAnimationFrame(flickerRaf)
-    flickerRaf = 0
-    flickerOn = true
-  }
-  function runFlicker() {
-    const delays = [85, 50, 125, 45, 100, 55, 115, 65, 90, 145]
-    let i = 0
-    let last = performance.now()
-    const tick = (now: number) => {
-      if (now - last >= delays[i % delays.length]) {
-        flickerOn = !flickerOn
-        last = now
-        i++
-      }
-      flickerRaf = requestAnimationFrame(tick)
-    }
-    flickerRaf = requestAnimationFrame(tick)
-  }
-
-  // ── Resolve aspect ratio from an image URL ────────────────
-  function loadImageAspect(src: string) {
-    const img = new Image()
-    img.onload = () => {
-      if (img.naturalWidth && img.naturalHeight)
-        mediaAspect = img.naturalWidth / img.naturalHeight
-    }
-    img.src = src
-  }
-
   let _opening = false
 
   async function doOpen() {
     clearTids()
-    stopFlicker()
     screenIn = false
-    flickerOn = true
-    flashOpacity = 0
-    videoReady = false
+    screenOut = false
     videoSrc = null
-    mediaAspect = null
+    beamVisible = false
+    beamOpacity = 0
 
-    const main = displayWork?.main
-    if (main?.type === 'video' && main.poster)
-      loadImageAspect(main.poster)
-    else if (main?.type === 'image')
-      loadImageAspect(main.src)
+    if (displayWork?.main.type === 'video')
+      videoSrc = displayWork.main.src
 
-    phase = 'open'
-    await wait(30)
+    phase = 'opening'
+
+    await wait(40)
     screenIn = true
-    await wait(280)
-    phase = 'poster'
-  }
-
-  async function doIgnite() {
-    phase = 'igniting'
-
-    videoSrc = displayWork?.main.src ?? null
-
-    await wait(80)
-
-    const rattlePattern = [60, 40, 90, 30, 70, 45, 55, 35, 80, 25, 65, 50]
-    for (const ms of rattlePattern) {
-      flickerOn = !flickerOn
-      await wait(ms)
-    }
-    flickerOn = true
 
     await wait(120)
+    beamVisible = true
+    await wait(30)
+    beamOpacity = 1
 
-    flashOpacity = 0.72
-    await wait(60)
-    flashOpacity = 0.38
-    await wait(80)
-    flashOpacity = 0.18
-    await wait(120)
-    flashOpacity = 0
-
-    phase = 'loading'
-    runFlicker()
-
-    if (videoReady) {
-      stopFlicker()
-      phase = 'playing'
-      videoEl?.play().catch(() => {})
-    }
-  }
-
-  function handlePlay() {
-    if (phase !== 'poster')
-      return
-    doIgnite()
+    phase = 'visible'
   }
 
   async function doClose() {
     clearTids()
-    stopFlicker()
     videoEl?.pause()
-    flashOpacity = 0
+
     phase = 'closing'
+    beamOpacity = 0
+    screenOut = true
+    await wait(80)
+    beamVisible = false
     screenIn = false
-    await wait(280)
+    await wait(300)
+
     phase = 'idle'
+    screenOut = false
     videoSrc = null
   }
 
@@ -166,14 +95,14 @@
     }
   })
 
-  function onCanPlay() {
-    videoReady = true
-    if (phase === 'loading') {
-      stopFlicker()
-      phase = 'playing'
-      videoEl?.play().catch(() => {})
-    }
+  function onKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape')
+      closeModal()
   }
+
+  let mediaAspect = $state<number | null>(null)
+  let gateEl = $state<HTMLDivElement | null>(null)
+  let gateHeight = $state<number | null>(null)
 
   function onVideoMeta() {
     if (videoEl?.videoWidth && videoEl.videoHeight)
@@ -182,33 +111,29 @@
 
   $effect(() => {
     void media
-    if (media?.type === 'image')
-      loadImageAspect(media.src)
+    mediaAspect = null
+    if (media?.type === 'image') {
+      const img = new Image()
+      img.onload = () => {
+        mediaAspect = img.naturalWidth / img.naturalHeight
+      }
+      img.src = media.src
+    }
   })
 
-  const canvasAspect = $derived(mediaAspect ? `${mediaAspect}` : '16/9')
+  $effect(() => {
+    const aspect = mediaAspect ?? (16 / 9)
+    if (!gateEl)
+      return
+    const w = gateEl.getBoundingClientRect().width
+    if (w > 0)
+      gateHeight = w / aspect
+  })
 
-  const mediaOpacity = $derived(
-    phase === 'playing' ?
-      1 :
-        phase === 'loading' ? (flickerOn ? 0.78 : 0.04) : 0,
-  )
-  const mediaTransition = $derived(
-    phase === 'loading' ? 'opacity 0.04s linear' : 'opacity 0.35s ease',
-  )
+  const showBackdrop = $derived(phase !== 'idle')
 
-  const showDarkCover = $derived(phase === 'open' || phase === 'igniting')
-
-  const posterBrightness = $derived(
-    phase === 'igniting' ? (flickerOn ? 0.55 : 0.05) : 1,
-  )
-  const posterTransition = $derived(
-    phase === 'igniting' ? 'filter 0.04s linear' : 'filter 0.2s ease',
-  )
-
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape')
-      closeModal()
+  function reelName(wip: WorkMedia, i: number): string {
+    return wip.name ?? wip.caption ?? `CUT ${i + 1}`
   }
 </script>
 
@@ -218,168 +143,141 @@
   <div
     class='bd'
     onclick={closeModal}
+    onkeydown={e => e.key === 'Enter' && closeModal()}
     role='button'
     tabindex='-1'
-    aria-label='Close'
-    in:fade={{ duration: 200 }}
-    out:fade={{ duration: 200 }}
+    aria-label='Close projection'
+    in:fade={{ duration: 180 }}
+    out:fade={{ duration: 220 }}
   >
+
+    {#if beamVisible}
+      <div class='beam' style='opacity:{beamOpacity}' aria-hidden='true'></div>
+    {/if}
+
     <div
       class='screen-wrap'
       class:screen-wrap--in={screenIn}
+      class:screen-wrap--out={screenOut}
+      role='presentation'
       onclick={e => e.stopPropagation()}
+      onkeydown={e => e.stopPropagation()}
     >
-      <div class='canvas' style='aspect-ratio:{canvasAspect}'>
 
-        <div class='fabric' aria-hidden='true'></div>
+      <div class='corner corner--tl' aria-hidden='true'></div>
+      <div class='corner corner--tr' aria-hidden='true'></div>
+      <div class='corner corner--bl' aria-hidden='true'></div>
+      <div class='corner corner--br' aria-hidden='true'></div>
+
+      <button
+        class='eject-btn'
+        onclick={e => {
+          e.stopPropagation()
+          closeModal()
+        }}
+        aria-label='Close'
+        type='button'
+      >
+        <span class='eject-label'>EJECT</span>
+        <svg class='eject-icon' viewBox='0 0 20 20' fill='none' aria-hidden='true'>
+          <polyline points='4,14 10,6 16,14' stroke='currentColor' stroke-width='1.6'
+                    stroke-linecap='square' stroke-linejoin='miter' />
+          <line x1='4' y1='16.5' x2='16' y2='16.5' stroke='currentColor' stroke-width='1.6'
+                stroke-linecap='square' />
+        </svg>
+      </button>
+
+      <div class='gate' bind:this={gateEl} style={gateHeight ? `height:${gateHeight}px` : 'aspect-ratio:16/9'}>
+
         {#if media?.type === 'video'}
-          {#if phase === 'poster' || phase === 'igniting' || phase === 'loading'}
-            <div
-              class='poster-layer'
-              style='filter:brightness({posterBrightness});transition:{posterTransition}'
-              aria-hidden='true'
-            >
-              <img src={media.poster ?? ''} alt='' class='poster-img' draggable='false' />
-            </div>
-          {/if}
-          {#if videoSrc}
-            <div
-              class='media-layer'
-              style='opacity:{mediaOpacity};transition:{mediaTransition}'
-              aria-hidden={phase !== 'playing'}
-            >
-              <video
-                bind:this={videoEl}
-                src={videoSrc}
-                poster={media.poster}
-                oncanplay={onCanPlay}
-                onloadedmetadata={onVideoMeta}
-                controls
-                loop
-                playsinline
-                controlslist='nodownload'
-                class='media-video'
-                onclick={e => e.stopPropagation()}
-              ></video>
-            </div>
-          {/if}
-          {#if phase === 'loading'}
-            <div class='scanlines' aria-hidden='true'></div>
-            <div class='vignette' aria-hidden='true'></div>
-            <div class='grain' aria-hidden='true'></div>
-            <div class='reel-wrap' aria-label='Loading' aria-live='polite'>
-              <svg class='reel' viewBox='0 0 200 200' aria-hidden='true' xmlns='http://www.w3.org/2000/svg'>
-                <circle cx='100' cy='100' r='96' class='reel-body' />
-                {#each { length: 6 } as _, i}
-                  <circle cx='100' cy='40' r='26' class='reel-hole'
-                          transform={`rotate(${i * 60} 100 100)`} />
-                {/each}
-                <circle cx='100' cy='100' r='24' class='reel-core' />
-                {#each { length: 6 } as _, i}
-                  <circle cx='100' cy='78' r='5' class='reel-bolt'
-                          transform={`rotate(${i * 60} 100 100)`} />
-                {/each}
-                <circle cx='100' cy='100' r='10' class='reel-center' />
-              </svg>
-            </div>
-          {/if}
-          {#if phase === 'poster'}
-            <button
-              class='play-btn'
-              onclick={e => {
-                e.stopPropagation(); handlePlay()
-              }}
-              aria-label='Play'
-              type='button'
-            >
-              <svg class='play-icon' viewBox='0 0 60 60' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'>
-                <polygon points='14,8 54,30 14,52' fill='currentColor' />
-              </svg>
-            </button>
-          {/if}
-          {#if flashOpacity > 0}
-            <div
-              class='proj-flash'
-              style='opacity:{flashOpacity}'
-              aria-hidden='true'
-            ></div>
-          {/if}
-
+          <div class='media-layer'>
+            <!-- svelte-ignore a11y_media_has_caption -->
+            <video
+              bind:this={videoEl}
+              src={videoSrc ?? undefined}
+              poster={media.poster}
+              onloadedmetadata={onVideoMeta}
+              controls
+              loop
+              playsinline
+              controlslist='nodownload'
+              preload='metadata'
+              class='media-video'
+              onclick={e => e.stopPropagation()}
+            ></video>
+          </div>
         {/if}
+
         {#if media?.type === 'image'}
-          <div
-            class='media-layer'
-            style='opacity:{phase === 'playing' || phase === 'loading' ? 1 : 0};transition:opacity 0.35s ease'
-          >
+          <div class='media-layer'>
             <img src={media.src} alt={displayWork?.title ?? ''} class='media-img' draggable='false' />
           </div>
-          <div class='scanlines' aria-hidden='true'></div>
-          <div class='vignette' aria-hidden='true'></div>
         {/if}
+
+        <div class='scanlines' aria-hidden='true'></div>
+
+        <div class='lens-vignette' aria-hidden='true'></div>
 
         <div class='screen-sheen' aria-hidden='true'></div>
 
-        {#if showDarkCover}
-          <div class='dark-cover' aria-hidden='true'></div>
-        {/if}
-
       </div>
-      {#if displayWork}
-        <div class='meta-bar'>
-          <div class='meta-info'>
-            <span class='meta-title'>{displayWork.title}</span>
-            {#if displayWork.year}
-              <span class='meta-year'>{displayWork.year}</span>
-            {/if}
-          </div>
 
-          {#if displayWork.wip?.length}
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class='wip-tabs' onclick={e => e.stopPropagation()}>
-              <button
-                class='wip-tab'
-                class:wip-tab--active={mediaIndex === -1}
-                onclick={() => {
-                  mediaIndex = -1
-                }}
-                type='button'
-              >MAIN</button>
-              {#each displayWork.wip as _, i}
-                <button
-                  class='wip-tab'
-                  class:wip-tab--active={mediaIndex === i}
-                  onclick={() => {
-                    mediaIndex = i
-                  }}
-                  type='button'
-                >WIP {i + 1}</button>
-              {/each}
-            </div>
+      <div class='data-strip'>
+        <div class='data-col data-col--left'>
+          <span class='data-label'>TITLE</span>
+          <span class='data-value'>{displayWork?.title ?? '—'}</span>
+        </div>
+        <div class='data-col data-col--right'>
+          {#if displayWork?.year}
+            <span class='data-label'>YEAR</span>
+            <span class='data-value'>{displayWork.year}</span>
           {/if}
+        </div>
+      </div>
+
+      {#if displayWork?.wip?.length}
+        <div class='reel-bar' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => e.stopPropagation()}>
+
+          <button
+            class='reel-btn'
+            class:reel-btn--active={mediaIndex === -1}
+            onclick={() => {
+              mediaIndex = -1
+            }}
+            type='button'
+          >
+            <span class='reel-btn__led' aria-hidden='true'></span>
+            <span class='reel-btn__name'>REEL</span>
+          </button>
+
+          {#each displayWork.wip as wip, i}
+            <button
+              class='reel-btn'
+              class:reel-btn--active={mediaIndex === i}
+              onclick={() => {
+                mediaIndex = i
+              }}
+              type='button'
+            >
+              <span class='reel-btn__led' aria-hidden='true'></span>
+              <span class='reel-btn__name'>{reelName(wip, i)}</span>
+            </button>
+          {/each}
+
         </div>
       {/if}
 
     </div>
-    <button
-      class='close-btn'
-      onclick={e => {
-        e.stopPropagation(); closeModal()
-      }}
-      aria-label='Close'
-      type='button'
-    >ESC</button>
-
   </div>
 {/if}
 
 <style>
+
   .bd {
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: rgba(4, 3, 2, 0.96);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(3, 2, 1, 0.97);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -387,50 +285,99 @@
     overflow: hidden;
   }
 
+  .beam {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+    width: 0;
+    height: 0;
+    border-left:  90px solid transparent;
+    border-right: 90px solid transparent;
+    border-top: 52vh solid rgba(223, 225, 215, 0.02);
+    filter: blur(24px);
+    transition: opacity 0.7s ease;
+  }
+
   .screen-wrap {
     position: relative;
-    width: min(88vw, 720px);
+    width: min(80vw, 660px);
     cursor: default;
     z-index: 1;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.28s ease, transform 0.28s ease;
-    filter: drop-shadow(0 24px 80px rgba(0, 0, 0, 0.95));
+    transform: translateY(12px);
+    transition:
+      opacity 0.34s ease,
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    filter:
+      drop-shadow(0 -4px 60px rgba(223, 225, 215, 0.03))
+      drop-shadow(0 40px 90px rgba(0, 0, 0, 0.99));
   }
+
   .screen-wrap--in {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .canvas {
+  .screen-wrap--out {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  .corner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .corner--tl { top: -1px;  left: -1px;
+    border-top:    1px solid rgba(223,225,215,0.45);
+    border-left:   1px solid rgba(223,225,215,0.45); }
+  .corner--tr { top: -1px;  right: -1px;
+    border-top:    1px solid rgba(223,225,215,0.45);
+    border-right:  1px solid rgba(223,225,215,0.45); }
+  .corner--bl { bottom: -1px; left: -1px;
+    border-bottom: 1px solid rgba(223,225,215,0.45);
+    border-left:   1px solid rgba(223,225,215,0.45); }
+  .corner--br { bottom: -1px; right: -1px;
+    border-bottom: 1px solid rgba(223,225,215,0.45);
+    border-right:  1px solid rgba(223,225,215,0.45); }
+
+  .eject-btn {
+    position: absolute;
+    top: -28px;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-secondary);
+    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(223, 225, 215, 0.28);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.15s;
+    z-index: 20;
+  }
+
+  .eject-btn:hover { color: rgba(223, 225, 215, 0.72); }
+  .eject-icon { width: 15px; height: 15px; flex-shrink: 0; }
+  .eject-label { display: block; }
+
+  .gate {
     position: relative;
     width: 100%;
-    background: var(--color-primary);
+    background: #080604;
     overflow: hidden;
-  }
-
-  .fabric {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    background-image:
-      repeating-linear-gradient(0deg,   transparent 0, transparent 3px, rgba(255,255,255,.5) 3px, rgba(255,255,255,.5) 4px),
-      repeating-linear-gradient(90deg,  transparent 0, transparent 3px, rgba(255,255,255,.5) 3px, rgba(255,255,255,.5) 4px);
-    background-size: 4px 4px;
-    z-index: 1;
-  }
-
-  .poster-layer {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-  }
-  .poster-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    transition: height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .media-layer {
@@ -438,13 +385,15 @@
     inset: 0;
     z-index: 2;
   }
+
   .media-video {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
-    background: var(--color-primary);
+    background: #080604;
   }
+
   .media-img {
     width: 100%;
     height: 100%;
@@ -458,86 +407,24 @@
     pointer-events: none;
     background: repeating-linear-gradient(
       to bottom,
-      transparent 0, transparent 3px,
-      rgba(0, 0, 0, .10) 3px, rgba(0, 0, 0, .10) 4px
+      transparent 0,
+      transparent 3px,
+      rgba(0,0,0,0.07) 3px,
+      rgba(0,0,0,0.07) 4px
     );
-    z-index: 3;
+    z-index: 8;
   }
-  .vignette {
+
+  .lens-vignette {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(ellipse 88% 82% at 50% 50%, transparent 36%, rgba(0,0,0,.66) 100%);
-    z-index: 4;
-  }
-  .grain {
-    position: absolute;
-    inset: -5%;
-    width: 110%;
-    height: 110%;
-    opacity: .07;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 180px 180px;
-    animation: grain-anim .09s steps(1) infinite;
-    z-index: 5;
-  }
-  @keyframes grain-anim {
-    0%  { background-position: 0 0 }
-    25% { background-position: -42px -18px }
-    50% { background-position: 22px -52px }
-    75% { background-position: -58px 14px }
-  }
-
-  .reel-wrap {
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-  .reel {
-    width: clamp(56px, 13vw, 104px);
-    height: clamp(56px, 13vw, 104px);
-    animation: reel-spin 3.6s linear infinite;
-    opacity: 0.6;
-  }
-  @keyframes reel-spin { to { transform: rotate(360deg); } }
-
-  .reel-body   { fill: var(--color-secondary); }
-  .reel-hole   { fill: var(--color-primary); }
-  .reel-core   { fill: var(--color-secondary); }
-  .reel-bolt   { fill: var(--color-primary); }
-  .reel-center { fill: var(--color-primary); }
-
-  .play-btn {
-    position: absolute;
-    inset: 0;
+    background: radial-gradient(
+      ellipse 92% 88% at 50% 50%,
+      transparent 36%,
+      rgba(0,0,0,0.52) 100%
+    );
     z-index: 9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(4, 3, 2, 0.28);
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-  .play-btn:hover {
-    background: rgba(4, 3, 2, 0.48);
-  }
-  .play-icon {
-    width: clamp(52px, 10vw, 80px);
-    height: clamp(52px, 10vw, 80px);
-    color: var(--color-secondary);
-    opacity: 0.88;
-    filter: drop-shadow(0 2px 20px rgba(0, 0, 0, 0.8));
-    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
-  }
-  .play-btn:hover .play-icon {
-    transform: scale(1.1);
-    opacity: 1;
   }
 
   .screen-sheen {
@@ -545,120 +432,113 @@
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(132deg, rgba(255,255,255,.018) 0%, transparent 42%),
-      linear-gradient(to bottom, rgba(255,255,255,.006) 0%, transparent 36%);
-    z-index: 7;
+      linear-gradient(140deg, rgba(255,255,255,0.011) 0%, transparent 50%),
+      linear-gradient(to bottom, rgba(255,255,255,0.005) 0%, transparent 38%);
+    z-index: 10;
   }
-  .dark-cover {
-    position: absolute;
-    inset: 0;
+
+  .data-strip {
     background: var(--color-primary);
-    pointer-events: none;
-    z-index: 8;
-  }
-
-  .proj-flash {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9;
-    background: radial-gradient(
-      ellipse 80% 70% at 50% 50%,
-      rgba(255, 245, 200, 1)   0%,
-      rgba(255, 220, 120, 0.9) 30%,
-      rgba(255, 180,  60, 0.5) 60%,
-      transparent              100%
-    );
-  }
-
-  .meta-bar {
+    border-top: 1px solid rgba(223,225,215,0.07);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 10px 16px;
-    background: var(--color-primary);
-    border-top: 1px solid rgba(223, 225, 215, 0.08);
+    gap: 8px;
+    padding: 8px 16px;
+    min-height: 40px;
   }
 
-  .meta-info {
+  .data-col {
     display: flex;
     align-items: baseline;
-    gap: 14px;
-    min-width: 0;
+    gap: 8px;
+    overflow: hidden;
   }
 
-  .meta-title {
+  .data-label {
+    font-family: var(--font-secondary);
+    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: rgba(223,225,215,0.28);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .data-value {
     font-family: var(--font-main);
-    font-size: clamp(1.3rem, 3.5vw, 2rem);
-    letter-spacing: .14em;
+    font-size: clamp(1.0625rem, 0.864rem + 0.398vw, 1.5rem);
+    letter-spacing: 0.12em;
     color: var(--color-secondary);
     text-transform: uppercase;
-    line-height: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-shadow:
+      1px 1px 0 rgba(0,0,0,0.6),
+      0 2px 4px rgba(0,0,0,0.25);
   }
 
-  .meta-year {
-    font-family: var(--font-secondary);
-    font-size: clamp(.65rem, 1.4vw, .9rem);
-    letter-spacing: .22em;
-    color: var(--color-secondary);
-    opacity: .35;
-    white-space: nowrap;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-
-  .wip-tabs {
+  .reel-bar {
+    background: var(--color-primary);
+    border-top: 1px solid rgba(223,225,215,0.06);
     display: flex;
-    gap: 3px;
-    flex-shrink: 0;
-  }
-  .wip-tab {
-    font-family: var(--font-secondary);
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .18em;
-    color: rgba(223, 225, 215, .35);
-    background: none;
-    border: 1px solid rgba(223, 225, 215, .12);
-    padding: 5px 10px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: color .15s, border-color .15s, background .15s;
-  }
-  .wip-tab--active {
-    color: rgba(223, 225, 215, .85);
-    border-color: rgba(223, 225, 215, .35);
-    background: rgba(223, 225, 215, .06);
-  }
-  .wip-tab:hover:not(.wip-tab--active) {
-    color: rgba(223, 225, 215, .6);
-    border-color: rgba(223, 225, 215, .22);
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 10px 16px 12px;
   }
 
-  .close-btn {
-    position: fixed;
-    top: 22px;
-    right: 26px;
-    z-index: 10000;
+  .reel-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
     font-family: var(--font-secondary);
-    font-size: .75rem;
+    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
     font-weight: 700;
-    letter-spacing: .28em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(223, 225, 215, .45);
+    color: rgba(223,225,215,0.3);
     background: none;
-    border: 1px solid rgba(223, 225, 215, .18);
-    padding: 10px 20px;
+    border: 1px solid rgba(223,225,215,0.08);
+    padding: 10px 18px 10px;
     cursor: pointer;
-    transition: color .15s, border-color .15s, background .15s;
+    min-width: 80px;
+    transition: color 0.14s, border-color 0.14s, background 0.14s;
+    position: relative;
   }
-  .close-btn:hover {
-    color: var(--color-secondary);
-    border-color: rgba(223, 225, 215, .45);
-    background: rgba(223, 225, 215, .06);
+
+  .reel-btn__led {
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(223,225,215,0.14);
+    flex-shrink: 0;
+    transition: background 0.14s, box-shadow 0.14s;
+  }
+
+  .reel-btn__name {
+    line-height: 1;
+  }
+
+  .reel-btn--active {
+    color: rgba(223,225,215,0.88);
+    border-color: rgba(223,225,215,0.28);
+    background: rgba(223,225,215,0.05);
+  }
+
+  .reel-btn--active .reel-btn__led {
+    background: rgba(223,225,215,0.9);
+    box-shadow: 0 0 7px rgba(223,225,215,0.5);
+  }
+
+  .reel-btn:hover:not(.reel-btn--active) {
+    color: rgba(223,225,215,0.55);
+    border-color: rgba(223,225,215,0.18);
+  }
+
+  .reel-btn:hover:not(.reel-btn--active) .reel-btn__led {
+    background: rgba(223,225,215,0.35);
   }
 </style>

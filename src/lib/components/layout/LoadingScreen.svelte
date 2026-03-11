@@ -9,6 +9,12 @@
     .map(w => w.main.poster ?? w.main.src)
     .filter((src, i, arr) => arr.indexOf(src) === i)
 
+  const TEXTURE_URLS = [
+    '/textures/paper.jpg',
+  ]
+
+  const ALL_IMAGE_URLS = [...TEXTURE_URLS, ...POSTER_URLS]
+
   let progress = $state(0)
 
   function setProgress(target: number) {
@@ -69,19 +75,19 @@
       document.fonts.ready,
     ]).then(() => {
       fontsOk = true
-      setProgress(0.15)
+      setProgress(0.12)
       check()
     })
 
     let loaded = 0
-    const total = POSTER_URLS.length || 1
+    const total = ALL_IMAGE_URLS.length || 1
 
     Promise.all(
-      POSTER_URLS.map(src =>
+      ALL_IMAGE_URLS.map(src =>
         new Promise<void>(resolve => {
           const img = new Image()
           img.onload = img.onerror = () => {
-            setProgress(0.15 + (++loaded / total) * 0.75)
+            setProgress(0.12 + (++loaded / total) * 0.78)
             resolve()
           }
           img.src = src
@@ -165,6 +171,8 @@
   align-items: center;
   justify-content: center;
   gap: 48px;
+
+  isolation: isolate;
 }
 
 .reel {
@@ -195,6 +203,7 @@
   background: rgba(223,225,215,0.08);
 
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .bar-fill {

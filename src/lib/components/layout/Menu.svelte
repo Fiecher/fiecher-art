@@ -137,6 +137,9 @@
     border: clamp(0.3rem, 0.245rem + 0.114vw, 0.5rem) solid var(--color-secondary);
     pointer-events: none;
     z-index: 2;
+    box-shadow:
+      inset  4px  4px 10px rgba(0, 0, 0, 0.22),
+      inset -4px -4px 10px rgba(0, 0, 0, 0.22);
   }
 
   .menu-list {
@@ -165,6 +168,14 @@
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    filter:
+      drop-shadow(0 0 0.4px rgba(223, 225, 215, 0.55))
+      drop-shadow(0.5px 0 0.3px rgba(223, 225, 215, 0.35))
+      drop-shadow(-0.5px 0 0.3px rgba(223, 225, 215, 0.35))
+      drop-shadow(0 0.5px 0.3px rgba(223, 225, 215, 0.30));
+    text-shadow:
+      1px 1px 0 rgba(0, 0, 0, 0.6),
+      0px 2px 4px rgba(0, 0, 0, 0.28);
   }
 
   .menu-text::before,

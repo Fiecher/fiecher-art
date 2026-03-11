@@ -17,6 +17,8 @@
     flex-direction: column;
     width: 100%;
     background-color: var(--color-secondary);
+    position: relative;
+    isolation: isolate;
   }
 
   .workspace-main {

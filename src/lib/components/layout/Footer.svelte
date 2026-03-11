@@ -80,6 +80,9 @@
 
   .footer-large {
     font-size: clamp(1.0625rem, 0.864rem + 0.398vw, 1.5rem);
+    text-shadow:
+      1px 1px 0 rgba(0, 0, 0, 0.65),
+      0px 2px 3px rgba(0, 0, 0, 0.28);
   }
 
   .footer-sep {

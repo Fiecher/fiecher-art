@@ -81,8 +81,6 @@ export async function goToSection(target: Section, pageIndex?: number | null) {
     const currentPage = get(worksPage)
     const pageToUse = pageIndex ?? currentPage ?? 0
     worksPage.set(pageToUse)
-  } else {
-    worksPage.set(0)
   }
 
   isTransitioning.set(true)

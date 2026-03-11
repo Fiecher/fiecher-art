@@ -43,6 +43,16 @@ export const WORKS: Work[] = [
       src: '/works/symptom-disturbia/Disturbia.mp4',
       poster: '/works/symptom-disturbia/Preview.png',
     },
+    wip: [
+      {
+        type: 'image',
+        src: '/works/symptom-disturbia/wip-01.jpg',
+      },
+      {
+        type: 'image',
+        src: '/works/symptom-disturbia/wip-02.jpg',
+      },
+    ],
   },
   {
     id: 'symptom-bulletin',
@@ -94,6 +104,37 @@ export const WORKS: Work[] = [
       poster: '/works/test4/Preview.jpg',
     },
   },
+  {
+    id: 'test5',
+    title: 'test5',
+    year: 2024,
+    main: {
+      type: 'video',
+      src: '/works/symptom-bulletin/TheBulletin.mp4',
+      poster: '/works/test5/Preview.jpg',
+    },
+  },
+  {
+    id: 'test6',
+    title: 'test6',
+    year: 2024,
+    main: {
+      type: 'video',
+      src: '/works/symptom-bulletin/TheBulletin.mp4',
+      poster: '/works/test6/Preview.jpg',
+    },
+  },
+  {
+    id: 'test7',
+    title: 'test7',
+    year: 2024,
+    main: {
+      type: 'video',
+      src: '/works/symptom-bulletin/TheBulletin.mp4',
+      poster: '/works/test7/Preview.jpg',
+    },
+  },
 ]
 
-export const WORK_PAGE_COUNT = 2
+const MAIN_PER_SECTION = 4
+export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / MAIN_PER_SECTION))

@@ -3,6 +3,7 @@ export interface WorkMedia {
   src: string
   poster?: string
   caption?: string
+  name?: string
 }
 
 export interface Work {
