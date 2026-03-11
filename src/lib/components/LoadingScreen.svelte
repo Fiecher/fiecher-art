@@ -5,31 +5,25 @@
   import { WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
-  const POSTER_URLS = WORKS
-    .map(w => w.main.poster ?? w.main.src)
-    .filter((src, i, arr) => arr.indexOf(src) === i)
-
-  const TEXTURE_URLS = [
+  const ASSET_URLS = [
     '/textures/paper.jpg',
+    ...WORKS
+      .map(w => w.main.poster ?? w.main.src)
+      .filter((src, i, arr) => arr.indexOf(src) === i),
   ]
-
-  const ALL_IMAGE_URLS = [...TEXTURE_URLS, ...POSTER_URLS]
 
   let progress = $state(0)
 
   function setProgress(target: number) {
     target = Math.max(progress, Math.min(target, 1))
-
     const step = () => {
       progress += (target - progress) * 0.25
-
       if (Math.abs(target - progress) > 0.002) {
         requestAnimationFrame(step)
       } else {
         progress = target
       }
     }
-
     step()
   }
 
@@ -37,7 +31,7 @@
     setProgress(0.03)
 
     let fontsOk = false
-    let postersOk = false
+    let assetsOk = false
     let paintOk = false
     let finished = false
 
@@ -45,58 +39,55 @@
       if (finished)
         return
       finished = true
-
       setProgress(1)
-
       await tick()
-
-      setTimeout(() => {
-        onDone()
-      }, 250)
+      setTimeout(() => onDone(), 250)
     }
 
     function check() {
-      if (fontsOk && postersOk && paintOk) {
+      if (fontsOk && assetsOk && paintOk)
         finish()
-      }
     }
 
-    const CRITICAL_FONTS = [
-      { family: 'Bebas Neue', weight: '400' },
-      { family: 'Trade Gothic LT Std', weight: '400' },
-    ]
-
     Promise.all([
-      ...CRITICAL_FONTS.map(({ family, weight }) =>
-        document.fonts.load(`${weight} 16px "${family}"`).catch(() => {
-          console.warn(`[loader] font failed: ${family}`)
-        }),
-      ),
+      document.fonts.load('400 16px "Bebas Neue"'),
+      document.fonts.load('400 16px "Trade Gothic LT Std"'),
       document.fonts.ready,
     ]).then(() => {
       fontsOk = true
-      setProgress(0.12)
+      setProgress(0.1)
+      check()
+    }).catch(() => {
+      fontsOk = true
       check()
     })
 
     let loaded = 0
-    const total = ALL_IMAGE_URLS.length || 1
+    const total = ASSET_URLS.length
 
-    Promise.all(
-      ALL_IMAGE_URLS.map(src =>
-        new Promise<void>(resolve => {
-          const img = new Image()
-          img.onload = img.onerror = () => {
-            setProgress(0.12 + (++loaded / total) * 0.78)
-            resolve()
-          }
-          img.src = src
-        }),
-      ),
-    ).then(() => {
-      postersOk = true
-      check()
-    })
+    if (total === 0) {
+      assetsOk = true
+    } else {
+      Promise.all(
+        ASSET_URLS.map((src, i) =>
+          new Promise<void>(resolve => {
+            const img = new Image()
+            const timer = window.setTimeout(resolve, 10_000)
+            img.onload = img.onerror = () => {
+              clearTimeout(timer)
+              loaded++
+              const base = i === 0 ? 0.15 : 0.1
+              setProgress(base + (loaded / total) * 0.85)
+              resolve()
+            }
+            img.src = src
+          }),
+        ),
+      ).then(() => {
+        assetsOk = true
+        check()
+      })
+    }
 
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
@@ -105,10 +96,7 @@
       }),
     )
 
-    setTimeout(() => {
-      console.warn('[loader] forced finish')
-      finish()
-    }, 6000)
+    setTimeout(() => finish(), 12_000)
   })
 </script>
 
@@ -122,33 +110,19 @@
     aria-hidden='true'
     xmlns='http://www.w3.org/2000/svg'
   >
-
     <circle cx='100' cy='100' r='96' class='reel-body' />
 
     {#each { length: 6 } as _, i}
-      <circle
-        cx='100'
-        cy='40'
-        r='26'
-        class='reel-hole'
-        transform={`rotate(${i * 60} 100 100)`}
-      />
+      <circle cx='100' cy='40' r='26' class='reel-hole' transform={`rotate(${i * 60} 100 100)`} />
     {/each}
 
     <circle cx='100' cy='100' r='24' class='reel-core' />
 
     {#each { length: 6 } as _, i}
-      <circle
-        cx='100'
-        cy='78'
-        r='5'
-        class='reel-bolt'
-        transform={`rotate(${i * 60} 100 100)`}
-      />
+      <circle cx='100' cy='78' r='5' class='reel-bolt' transform={`rotate(${i * 60} 100 100)`} />
     {/each}
 
     <circle cx='100' cy='100' r='10' class='reel-center' />
-
   </svg>
 
   <div class='bar'>
@@ -158,20 +132,16 @@
 </div>
 
 <style>
-
 .loader {
   position: fixed;
   inset: 0;
   z-index: 99999;
-
   background: var(--color-primary);
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 48px;
-
   isolation: isolate;
 }
 
@@ -185,40 +155,33 @@
 
 .reel-body {
   fill: var(--color-secondary);
-
   filter:
     drop-shadow(0 0 6px rgba(223,225,215,0.08))
     drop-shadow(0 0 2px rgba(0,0,0,0.4));
 }
 
-.reel-hole  { fill: var(--color-primary); }
-.reel-core  { fill: var(--color-secondary); }
-.reel-bolt  { fill: var(--color-primary); }
+.reel-hole   { fill: var(--color-primary); }
+.reel-core   { fill: var(--color-secondary); }
+.reel-bolt   { fill: var(--color-primary); }
 .reel-center { fill: var(--color-primary); }
 
 .bar {
   width: 220px;
   height: 4px;
-
   background: rgba(223,225,215,0.08);
-
   overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .bar-fill {
   height: 100%;
-
   background: linear-gradient(
     90deg,
     rgba(223,225,215,0.25),
     var(--color-secondary),
     rgba(223,225,215,0.25)
   );
-
   transition: width 0.25s ease;
-
   box-shadow: 0 0 8px rgba(223,225,215,0.25);
 }
-
 </style>

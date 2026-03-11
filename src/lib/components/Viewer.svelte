@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import { closeModal, modalCell } from '$lib/modal'
+  import { closeModal, modalCell } from '$lib/viewer'
   import { fade } from 'svelte/transition'
   import type { WorkMedia } from '$lib/types'
 
@@ -224,12 +224,10 @@
 
       <div class='data-strip'>
         <div class='data-col data-col--left'>
-          <span class='data-label'>TITLE</span>
           <span class='data-value'>{displayWork?.title ?? '—'}</span>
         </div>
         <div class='data-col data-col--right'>
           {#if displayWork?.year}
-            <span class='data-label'>YEAR</span>
             <span class='data-value'>{displayWork.year}</span>
           {/if}
         </div>
@@ -328,38 +326,38 @@
 
   .corner {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     z-index: 20;
     pointer-events: none;
   }
 
-  .corner--tl { top: -1px;  left: -1px;
-    border-top:    1px solid rgba(223,225,215,0.45);
-    border-left:   1px solid rgba(223,225,215,0.45); }
-  .corner--tr { top: -1px;  right: -1px;
-    border-top:    1px solid rgba(223,225,215,0.45);
-    border-right:  1px solid rgba(223,225,215,0.45); }
-  .corner--bl { bottom: -1px; left: -1px;
-    border-bottom: 1px solid rgba(223,225,215,0.45);
-    border-left:   1px solid rgba(223,225,215,0.45); }
-  .corner--br { bottom: -1px; right: -1px;
-    border-bottom: 1px solid rgba(223,225,215,0.45);
-    border-right:  1px solid rgba(223,225,215,0.45); }
+  .corner--tl { top: -10px;  left: -10px;
+    border-top:    0.25rem solid var(--color-secondary);
+    border-left:   0.25rem solid var(--color-secondary); }
+  .corner--tr { top: -10px;  right: -10px;
+    border-top:    0.25rem solid var(--color-secondary);
+    border-right:  0.25rem solid var(--color-secondary); }
+  .corner--bl { bottom: -10px; left: -10px;
+    border-bottom: 0.25rem solid var(--color-secondary);
+    border-left:   0.25rem solid var(--color-secondary); }
+  .corner--br { bottom: -10px; right: -10px;
+    border-bottom: 0.25rem solid var(--color-secondary);
+    border-right:  0.25rem solid var(--color-secondary); }
 
   .eject-btn {
     position: absolute;
-    top: -28px;
-    right: 0;
+    top: -40px;
+    right: -15px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-family: var(--font-secondary);
     font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
     font-weight: 700;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: rgba(223, 225, 215, 0.28);
+    color: var(--color-secondary);
     background: none;
     border: none;
     cursor: pointer;
@@ -391,7 +389,7 @@
     height: 100%;
     object-fit: contain;
     display: block;
-    background: #080604;
+    background: var(--color-primary);
   }
 
   .media-img {
@@ -453,16 +451,6 @@
     align-items: baseline;
     gap: 8px;
     overflow: hidden;
-  }
-
-  .data-label {
-    font-family: var(--font-secondary);
-    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: rgba(223,225,215,0.28);
-    white-space: nowrap;
-    flex-shrink: 0;
   }
 
   .data-value {

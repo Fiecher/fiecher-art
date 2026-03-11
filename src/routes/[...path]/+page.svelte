@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import Footer from '$lib/components/layout/Footer.svelte'
-  import Menu from '$lib/components/layout/Menu.svelte'
-  import Info from '$lib/components/sections/Info.svelte'
-  import Works from '$lib/components/sections/Works.svelte'
+  import Footer from '$lib/components/Footer.svelte'
+  import Info from '$lib/components/Info.svelte'
+  import Menu from '$lib/components/Menu.svelte'
+  import Works from '$lib/components/Works.svelte'
   import { activeSection, goToSection, initNavigation } from '$lib/navigation'
   import { onDestroy, onMount } from 'svelte'
   import { fade } from 'svelte/transition'

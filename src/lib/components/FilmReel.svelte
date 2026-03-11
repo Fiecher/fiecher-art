@@ -20,12 +20,20 @@
 
   let offsetCells = $state(0)
   const offset = $derived(offsetCells * cellSize)
+
   let animating = false
   let animFromCells = 0
   let animTargetCells = 0
   let animStart = 0
   let animDur = 0
   let rafId = 0
+
+  let dragging = false
+  let dragStartX = 0
+  let dragStartCells = 0
+  let dragVelX = 0
+  let dragLastX = 0
+  let dragLastT = 0
 
   function normalizeCells(v: number): number {
     const s = segmentLen
@@ -51,6 +59,51 @@
     animating = true
   }
 
+  export function getDragDeltaCells(): number {
+    return dragging ? offsetCells - dragStartCells : 0
+  }
+
+  export function snapTo(targetOffsetCells: number, duration = 500) {
+    dragging = false
+    animFromCells = offsetCells
+    animTargetCells = normalizeCells(targetOffsetCells)
+    animStart = performance.now()
+    animDur = duration
+    animating = true
+  }
+
+  export function onDragStart(clientX: number) {
+    if (cellSize <= 0)
+      return
+    animating = false
+    dragging = true
+    dragStartX = clientX
+    dragStartCells = offsetCells
+    dragVelX = 0
+    dragLastX = clientX
+    dragLastT = performance.now()
+  }
+
+  export function onDragMove(clientX: number) {
+    if (!dragging || cellSize <= 0)
+      return
+    const now = performance.now()
+    const dt = now - dragLastT
+    if (dt > 0) {
+      dragVelX = (clientX - dragLastX) / dt
+    }
+    dragLastX = clientX
+    dragLastT = now
+    const deltaPx = clientX - dragStartX
+    offsetCells = normalizeCells(dragStartCells + deltaPx / cellSize)
+  }
+
+  export function onDragEnd() {
+    if (!dragging)
+      return
+    dragging = false
+  }
+
   const entryXCompensated = $derived(
     entryX === 0 ?
       0 :
@@ -60,7 +113,9 @@
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
 
   onMount(() => {
+    const cs = cellSize > 0 ? cellSize : 1
     offsetCells = normalizeCells(-segmentLen)
+
     if (entryX !== 0) {
       slideX = entryXCompensated
       const triggerEntrance = () => {
@@ -112,7 +167,6 @@
   const holeCount = $derived(Math.max(3, Math.floor(cellSize / (holeW + holeGap))))
   const holeGapActual = $derived((cellSize - holeCount * holeW) / holeCount)
   const holePadding = $derived(holeGapActual / 2)
-
   const sheenEls = $state<(HTMLElement | null)[]>([])
   let pressedIdx = $state<number | null>(null)
 
@@ -142,6 +196,7 @@
 
 <div
   class='film-strip'
+  class:film-strip--dragging={dragging}
   style={`
     --tilt:    ${tilt}deg;
     --slide-x: ${slideX}px;
@@ -216,10 +271,16 @@
     transform: translateY(-50%) rotate(var(--tilt, 3deg)) translateX(var(--slide-x, 0px));
     background: var(--color-primary);
     overflow: hidden;
+    cursor: grab;
     transition:
       transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1),
       opacity   0.6s ease;
     isolation: isolate;
+  }
+
+  .film-strip--dragging {
+    cursor: grabbing;
+    user-select: none;
   }
 
   .film-strip::before {

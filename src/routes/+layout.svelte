@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import LoadingScreen from '$lib/components/layout/LoadingScreen.svelte'
-  import WorkModal from '$lib/components/layout/Viewer.svelte'
-  import { modalCell } from '$lib/modal'
-  import { activeSection, globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import LoadingScreen from '$lib/components/LoadingScreen.svelte'
+  import WorkModal from '$lib/components/Viewer.svelte'
+  import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import { modalCell } from '$lib/viewer'
   import { get } from 'svelte/store'
   import './layout.css'
 
@@ -151,7 +151,6 @@
       <div class='poster'>
         {@render children()}
         <div class='poster-paper' aria-hidden='true'></div>
-        <div class='poster-folds' aria-hidden='true'></div>
       </div>
     </div>
   </div>

@@ -58,42 +58,6 @@ body {
   opacity: 0.82;
 }
 
-.poster-folds {
-  position: absolute;
-  inset: 0;
-  z-index: 9001;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  background-image:
-    linear-gradient(
-      to right,
-      transparent calc(50% - 1.5px),
-      rgba(255, 248, 220, 0.06) calc(50% - 1.5px),
-      rgba(255, 248, 220, 0.06) calc(50% - 0.5px),
-      rgba(20, 14, 6, 0.07) calc(50% - 0.5px),
-      rgba(20, 14, 6, 0.07) calc(50% + 0.5px),
-      transparent calc(50% + 0.5px)
-    ),
-    linear-gradient(
-      to bottom,
-      transparent calc(33.3% - 1.5px),
-      rgba(255, 248, 220, 0.055) calc(33.3% - 1.5px),
-      rgba(255, 248, 220, 0.055) calc(33.3% - 0.5px),
-      rgba(20, 14, 6, 0.065) calc(33.3% - 0.5px),
-      rgba(20, 14, 6, 0.065) calc(33.3% + 0.5px),
-      transparent calc(33.3% + 0.5px)
-    ),
-    linear-gradient(
-      to bottom,
-      transparent calc(66.6% - 1.5px),
-      rgba(255, 248, 220, 0.05) calc(66.6% - 1.5px),
-      rgba(255, 248, 220, 0.05) calc(66.6% - 0.5px),
-      rgba(20, 14, 6, 0.06) calc(66.6% - 0.5px),
-      rgba(20, 14, 6, 0.06) calc(66.6% + 0.5px),
-      transparent calc(66.6% + 0.5px)
-    );
-}
-
 body::after {
   content: '';
   position: fixed;

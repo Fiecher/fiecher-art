@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import FilmReel from '$lib/components/sections/FilmReel.svelte'
+  import FilmReel from '$lib/components/FilmReel.svelte'
   import { WORK_PAGE_COUNT, WORKS } from '$lib/config'
-  import { openModal } from '$lib/modal'
-  import { updateWorksPage, worksPage } from '$lib/navigation'
+  import { navigate, updateWorksPage, worksPage } from '$lib/navigation'
+  import { openModal } from '$lib/viewer'
   import { onMount } from 'svelte'
   import { get } from 'svelte/store'
 
@@ -34,7 +34,7 @@
   const botCells = makeCells(botOffset)
 
   const EDGE_BLEED = 0.45
-  const GAP_RATIO = 0.055
+  const GAP_RATIO = 0.025
   const CELL_MIN = 80
   const CELL_MAX = 600
 
@@ -69,7 +69,8 @@
     if (clamped === currentSection && !isAnimating)
       return
     if (isAnimating) {
-      pendingSection = clamped; return
+      pendingSection = clamped
+      return
     }
 
     let delta: number
@@ -116,8 +117,12 @@
     navigateTo(idx, 0)
   }
 
+  let mouseDragDistance = 0
+
   function handleCellClick(id: string) {
     if (isAnimating)
+      return
+    if (mouseDragDistance > 6)
       return
     const work = WORKS.find(w => w.id === id)
     if (work)
@@ -147,10 +152,77 @@
       const next = (currentSection + direction + sectionCount) % sectionCount
       updateWorksPage(next)
       navigateTo(next, direction)
+    } else if (ady >= SWIPE_MIN_PX && ady > adx) {
+      e.stopPropagation()
+      navigate(dy > 0 ? 1 : -1)
     }
   }
 
+  let mouseDragging = false
+  let mouseDragStartX = 0
+  let mouseDragStartSection = 0
+
+  function onMouseDown(e: MouseEvent) {
+    if (e.button !== 0)
+      return
+    e.preventDefault()
+    mouseDragging = true
+    mouseDragStartX = e.clientX
+    mouseDragStartSection = currentSection
+    mouseDragDistance = 0
+    reelTop?.onDragStart(e.clientX)
+    // Bottom reel starts mirrored — invert the start point
+    reelBot?.onDragStart(e.clientX)
+  }
+
+  function onMouseMove(e: MouseEvent) {
+    if (!mouseDragging)
+      return
+    const delta = e.clientX - mouseDragStartX
+    mouseDragDistance = Math.abs(delta)
+    reelTop?.onDragMove(e.clientX)
+    reelBot?.onDragMove(mouseDragStartX - delta)
+  }
+
+  function snapAfterDrag(endX: number) {
+    if (!mouseDragging)
+      return
+    mouseDragging = false
+    reelTop?.onDragEnd()
+    reelBot?.onDragEnd()
+
+    // Determine target section from how far user dragged
+    const draggedPx = endX - mouseDragStartX
+    const sectionsPx = CELLS_PER_STRIP * cellSize
+    const rawTarget = mouseDragStartSection - draggedPx / sectionsPx
+    const snapped = Math.round(rawTarget)
+    const target = ((snapped % sectionCount) + sectionCount) % sectionCount
+
+    // scrollBy from current dragged offset to target
+    const currentPx = draggedPx
+    const targetPx = (mouseDragStartSection - target) * sectionsPx
+    const remainingPx = targetPx - currentPx
+
+    reelTop?.scrollBy(remainingPx, 450)
+    reelBot?.scrollBy(-remainingPx, 450)
+
+    if (target !== currentSection) {
+      currentSection = target
+      updateWorksPage(target)
+    }
+  }
+
+  function onMouseUp(e: MouseEvent) {
+    snapAfterDrag(e.clientX)
+  }
+
+  function onMouseLeave(e: MouseEvent) {
+    snapAfterDrag(e.clientX)
+  }
+
   onMount(() => {
+    // Sync the global store so scrollbar and layout agree with
+    // the section we derived before mount.
     updateWorksPage(initialSection)
 
     const ro = new ResizeObserver(entries => {
@@ -166,6 +238,7 @@
       stageH = stageEl.offsetHeight
     }
 
+    // Only now allow the $worksPage effect to drive navigation.
     mounted = true
 
     return () => ro.disconnect()
@@ -178,7 +251,15 @@
   ontouchstart={onTouchStart}
   ontouchend={onTouchEnd}
 >
-  <div class='strips-stage' bind:this={stageEl}>
+  <div
+    class='strips-stage'
+    class:strips-stage--dragging={mouseDragging}
+    bind:this={stageEl}
+    onmousedown={onMouseDown}
+    onmousemove={onMouseMove}
+    onmouseup={onMouseUp}
+    onmouseleave={onMouseLeave}
+  >
     <div class='strip-slot' style={`height:${slotH}px; top:0`}>
       <FilmReel
         bind:this={reelTop}
@@ -218,8 +299,8 @@
           aria-label={`Section ${i + 1} of ${sectionCount}`}
           type='button'
         >
-          <span class='dot' aria-hidden='true'>
-            <span class='dot-ring'></span>
+          <span class='dot-frame' aria-hidden='true'>
+            <span class='dot-frame__num'>{String(i + 1).padStart(2, '0')}</span>
           </span>
         </button>
       {/each}
@@ -228,6 +309,7 @@
 </div>
 
 <style>
+
   .works {
     display: flex;
     flex-direction: column;
@@ -255,6 +337,12 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .strips-stage--dragging {
+    cursor: grabbing;
   }
 
   .strip-slot {
@@ -265,17 +353,18 @@
 
   .dot-nav {
     position: absolute;
-    bottom: 18px;
+    bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
-    background: transparent;
+    gap: 10px;
     padding: 0;
     border: none;
+    background: transparent;
+    mix-blend-mode: difference;
   }
 
   .dot-btn {
@@ -292,61 +381,44 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .dot {
-    display: block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+  .dot-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 30px;
+    border: 1px solid white;
     position: relative;
-    flex-shrink: 0;
-
-    background: transparent;
-    box-shadow: 0 0 0 1.5px var(--color-primary);
     opacity: 0.35;
-
-    transition:
-      background  0.22s ease 0.18s,
-      opacity     0.22s ease,
-      box-shadow  0.22s ease;
+    transition: opacity 0.2s ease;
   }
 
-  .dot-btn:hover .dot {
-    opacity: 0.6;
+  .dot-frame__num {
+    font-family: var(--font-secondary);
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    user-select: none;
   }
 
-  .dot-btn--active .dot {
-    background: var(--color-primary);
-    box-shadow: 0 0 0 1.5px var(--color-primary);
-    opacity: 0.75;
+  .dot-btn:hover .dot-frame {
+    opacity: 0.65;
   }
 
-  .dot-ring {
-    display: block;
-    position: absolute;
-    inset: -1px;
-    border-radius: 50%;
-    border: 1.5px solid var(--color-primary);
-    opacity: 0;
-    transform: scale(1);
-    pointer-events: none;
+  .dot-btn--active .dot-frame {
+    opacity: 1;
+    background: white;
   }
 
-  .dot-btn--active .dot-ring {
-    animation: ring-converge 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  .dot-btn--active .dot-frame__num {
+    color: black;
   }
 
-  @keyframes ring-converge {
-    0%   { transform: scale(3.5); opacity: 0;    }
-    25%  { opacity: 0.6; }
-    85%  { transform: scale(1);   opacity: 0.45; }
-    100% { transform: scale(1);   opacity: 0;    }
-  }
-
-  .dot-btn:focus-visible .dot {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 4px;
-    border-radius: 50%;
-    opacity: 0.7;
+  .dot-btn:focus-visible .dot-frame {
+    outline: 2px solid white;
+    outline-offset: 3px;
+    opacity: 0.9;
   }
 
   @media (max-width: 480px) {
