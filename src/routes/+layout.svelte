@@ -9,7 +9,6 @@
   const { children } = $props()
 
   let loaded = $state(false)
-
   function onLoaderDone() {
     loaded = true
   }
@@ -34,13 +33,11 @@
     const target = Math.round(progress * TOTAL_STEPS) * STEP_PX
     if (Math.abs(scrollEl.scrollTop - target) < 2)
       return
-
     programmaticScroll = true
     clearTimeout(programmaticTimer)
     programmaticTimer = window.setTimeout(() => {
       programmaticScroll = false
     }, 700)
-
     scrollEl.scrollTo({ top: target, behavior: 'smooth' })
   }
 
@@ -121,8 +118,6 @@
     let delta = 0
     if (ady >= adx && ady >= SWIPE_MIN_PX)
       delta = dy > 0 ? 1 : -1
-    else if (adx > ady && adx >= SWIPE_MIN_PX && $activeSection === 'WORKS')
-      delta = dx > 0 ? 1 : -1
 
     if (delta === 0)
       return
@@ -137,11 +132,9 @@
   }
 </script>
 
-<svelte:window
-  onresize={() => {
-    viewportH = window.visualViewport?.height ?? window.innerHeight
-  }}
-/>
+<svelte:window onresize={() => {
+  viewportH = window.visualViewport?.height ?? window.innerHeight
+}} />
 
 {#if !loaded}
   <LoadingScreen onDone={onLoaderDone} />
@@ -157,6 +150,8 @@
     <div class='poster-sticky'>
       <div class='poster'>
         {@render children()}
+        <div class='poster-paper' aria-hidden='true'></div>
+        <div class='poster-folds' aria-hidden='true'></div>
       </div>
     </div>
   </div>
@@ -173,17 +168,14 @@
     background: var(--color-primary);
     transition: opacity 0.4s ease;
   }
-
   .scroll-wrapper.is-hidden {
     opacity: 0;
     pointer-events: none;
   }
-
   .scroll-phantom {
     position: relative;
     width: 100%;
   }
-
   .poster-sticky {
     position: sticky;
     top: 0;
@@ -192,7 +184,6 @@
     justify-content: center;
     overflow: hidden;
   }
-
   .poster {
     aspect-ratio: 2 / 3;
     height: 100dvh;
@@ -200,5 +191,6 @@
     background: var(--color-primary);
     display: flex;
     flex-direction: column;
+    position: relative;
   }
 </style>

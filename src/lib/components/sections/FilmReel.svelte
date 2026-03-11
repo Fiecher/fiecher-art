@@ -7,32 +7,19 @@
     cellSize: number
     tilt?: number
     entryX?: number
+    entryDelay?: number
+    initialSection?: number
+    cellsPerSection?: number
     onCellClick?: (id: string) => void
   }
 
-  const { cells, cellSize, tilt = 3, entryX = 0, onCellClick }: Props = $props()
-  let localX = $state(0)
-  let localOpacity = $state(0)
-
-  $effect(() => {
-    localX = entryX
-    localOpacity = entryX !== 0 ? 0 : 1
-    if (entryX === 0)
-      return
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        localX = 0
-        localOpacity = 1
-      }),
-    )
-  })
+  const { cells, cellSize, tilt = 3, entryX = 0, entryDelay = 0, initialSection = 0, cellsPerSection = 2, onCellClick }: Props = $props()
 
   const loopCells = $derived([...cells, ...cells, ...cells])
   const segmentLen = $derived(cells.length)
 
   let offsetCells = $state(0)
   const offset = $derived(offsetCells * cellSize)
-
   let animating = false
   let animFromCells = 0
   let animTargetCells = 0
@@ -54,6 +41,8 @@
   }
 
   export function scrollBy(px: number, duration = 700) {
+    if (cellSize <= 0)
+      return
     const deltaCells = px / cellSize
     animFromCells = offsetCells
     animTargetCells = normalizeCells(offsetCells - deltaCells)
@@ -62,13 +51,40 @@
     animating = true
   }
 
+  const entryXCompensated = $derived(
+    entryX === 0 ?
+      0 :
+        entryX + Math.sign(entryX) * Math.abs(initialSection) * cellsPerSection * cellSize,
+  )
+  let slideX = $state(entryXCompensated)
+  let slideOpa = $state(entryX !== 0 ? 0 : 1)
+
   onMount(() => {
     offsetCells = normalizeCells(-segmentLen)
+    if (entryX !== 0) {
+      slideX = entryXCompensated
+      const triggerEntrance = () => {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            slideX = 0
+            slideOpa = 1
+          }),
+        )
+      }
+      if (entryDelay > 0) {
+        window.setTimeout(triggerEntrance, entryDelay)
+      } else {
+        triggerEntrance()
+      }
+    }
 
     function tick(now: number) {
       if (animating) {
         const t = Math.min((now - animStart) / animDur, 1)
-        offsetCells = normalizeCells(animFromCells + (animTargetCells - animFromCells) * ease(t))
+        const e = ease(t)
+        offsetCells = normalizeCells(
+          animFromCells + (animTargetCells - animFromCells) * e,
+        )
         if (t >= 1) {
           animating = false
           offsetCells = animTargetCells
@@ -83,7 +99,6 @@
 
   const BASE = 220
   const r = $derived(cellSize / BASE)
-
   const holeW = $derived(Math.round(20 * r))
   const holeH = $derived(Math.round(14 * r))
   const holeGap = $derived(Math.round(14 * r))
@@ -99,6 +114,7 @@
   const holePadding = $derived(holeGapActual / 2)
 
   const sheenEls = $state<(HTMLElement | null)[]>([])
+  let pressedIdx = $state<number | null>(null)
 
   function triggerSheen(idx: number) {
     const el = sheenEls[idx]
@@ -114,25 +130,33 @@
       { duration: 900, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
     )
   }
+
+  function triggerFlash(idx: number, id: string) {
+    pressedIdx = idx
+    window.setTimeout(() => {
+      pressedIdx = null
+    }, 180)
+    window.setTimeout(() => onCellClick?.(id), 120)
+  }
 </script>
 
 <div
   class='film-strip'
   style={`
-    --tilt: ${tilt}deg;
-    --local-x: ${localX}px;
-    --cell: ${cellSize}px;
-    opacity: ${localOpacity}
+    --tilt:    ${tilt}deg;
+    --slide-x: ${slideX}px;
+    --cell:    ${cellSize}px;
+    opacity:   ${slideOpa};
   `}
 >
-  <div class='strip-track' style={`transform: translateX(${offset}px)`}>
+  <div class='strip-track' style={`transform:translateX(${offset}px)`}>
     {#each loopCells as cell, i (cell.id + i)}
       <div
         class='film-cell'
         role='button'
         tabindex='0'
-        onclick={() => onCellClick?.(cell.id)}
-        onkeydown={e => e.key === 'Enter' && onCellClick?.(cell.id)}
+        onclick={() => triggerFlash(i, cell.id)}
+        onkeydown={e => e.key === 'Enter' && triggerFlash(i, cell.id)}
         onmouseenter={() => triggerSheen(i)}
         aria-label={cell.title ?? 'Open work'}
         style={`width:${cellSize}px; height:${cellSize}px; padding:${sprockP}px 0`}
@@ -143,34 +167,26 @@
           style={`height:${sprockH}px; gap:${holeGapActual}px; padding:0 ${holePadding}px`}
         >
           {#each { length: holeCount } as _}
-            <div
-              class='hole'
-              style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}
-            ></div>
+            <div class='hole' style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}></div>
           {/each}
         </div>
 
-        <div
-          class='cell-frame'
-          style={`border-radius:${frameR}px; margin:${framePad}px ${frameM}px`}
-        >
-          {#if cell.image}
-            <img
-              src={cell.image}
-              alt={cell.title ?? ''}
-              draggable='false'
-              loading='lazy'
-              style={`border-radius:${frameR}px`}
-            />
-          {:else}
-            <div class='frame-placeholder' style={`border-radius:${frameR}px`}></div>
-          {/if}
+        <div class='cell-frame' style={`border-radius:${frameR}px; margin:${framePad}px ${frameM}px`}>
+          <div class='frame-inner' class:frame-inner--pressed={pressedIdx === i}>
+            {#if cell.image}
+              <img
+                src={cell.image}
+                alt={cell.title ?? ''}
+                draggable='false'
+                loading='lazy'
+                style={`border-radius:${frameR}px`}
+              />
+            {:else}
+              <div class='frame-placeholder' style={`border-radius:${frameR}px`}></div>
+            {/if}
+          </div>
           {#if cell.title}
-            <div
-              class='cell-title'
-              aria-hidden='true'
-              style={`border-radius:${frameR}px`}
-            >
+            <div class='cell-title' aria-hidden='true' style={`border-radius:${frameR}px`}>
               <span style={`font-size:${titleFs}rem`}>{cell.title}</span>
             </div>
           {/if}
@@ -183,10 +199,7 @@
           style={`height:${sprockH}px; gap:${holeGapActual}px; padding:0 ${holePadding}px`}
         >
           {#each { length: holeCount } as _}
-            <div
-              class='hole'
-              style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}
-            ></div>
+            <div class='hole' style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}></div>
           {/each}
         </div>
       </div>
@@ -197,15 +210,33 @@
 <style>
   .film-strip {
     position: absolute;
-    left: -20%; right: -20%;
+    left: -25%; right: -25%;
     top: 50%;
     height: var(--cell);
-    transform: translateY(-50%) rotate(var(--tilt, 3deg)) translateX(var(--local-x, 0px));
+    transform: translateY(-50%) rotate(var(--tilt, 3deg)) translateX(var(--slide-x, 0px));
     background: var(--color-primary);
     overflow: hidden;
     transition:
       transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1),
       opacity   0.6s ease;
+    isolation: isolate;
+  }
+
+  .film-strip::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+
+    background-image:
+      radial-gradient(circle, rgba(11, 10, 9, 0.50) 1.0px, transparent 1.0px),
+      radial-gradient(circle, rgba(11, 10, 9, 0.50) 1.0px, transparent 1.0px);
+    background-size: 5px 5px;
+    background-position: 0px 0px, 2.5px 2.5px;
+
+    mix-blend-mode: multiply;
+    opacity: 1;
   }
 
   .strip-track {
@@ -252,6 +283,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.35);
   }
 
   .cell-frame img,
@@ -261,6 +293,23 @@
     display: block;
   }
   .frame-placeholder { background: var(--color-secondary); }
+
+  .frame-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      transform 0.1s cubic-bezier(0.4, 0, 0.6, 1),
+      box-shadow 0.1s ease;
+    transform-origin: center center;
+    transform: scale(1.05);
+  }
+  .frame-inner--pressed {
+    transform: scale(1.0);
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.55);
+  }
 
   .cell-title {
     position: absolute; inset: 0;
@@ -279,6 +328,9 @@
     text-align: center;
     padding: 0 8px;
     text-transform: uppercase;
+    text-shadow:
+      1px 1px 0 rgba(0,0,0,0.65),
+      2px 2px 4px rgba(0,0,0,0.30);
   }
 
   .sheen {
@@ -290,12 +342,13 @@
     background: linear-gradient(
       to right,
       transparent 0%,
-      rgba(255, 252, 235, 0.18) 40%,
-      rgba(255, 255, 255, 0.72) 50%,
-      rgba(255, 252, 235, 0.18) 60%,
+      rgba(255,252,235,0.18) 40%,
+      rgba(255,255,255,0.72) 50%,
+      rgba(255,252,235,0.18) 60%,
       transparent 100%
     );
     width: 40%;
     transform: translateX(-250%) skewX(-15deg);
   }
+
 </style>

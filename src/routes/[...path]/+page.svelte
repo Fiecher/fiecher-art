@@ -18,6 +18,17 @@
   })
 
   $: isInfo = $activeSection === 'INFO'
+
+  let prevSection = $activeSection
+  let worksEntryDelay = 0
+  $: {
+    if ($activeSection === 'WORKS' && prevSection === 'INFO') {
+      worksEntryDelay = 150
+    } else if ($activeSection !== 'WORKS') {
+      worksEntryDelay = 0
+    }
+    prevSection = $activeSection
+  }
 </script>
 
 <div class='page-shell'>
@@ -35,7 +46,7 @@
             <h1 class='works-title'>REEL</h1>
           </section>
         {:else if $activeSection === 'WORKS'}
-          <Works />
+          <Works entryDelay={worksEntryDelay} />
         {/if}
       </WorkspaceFrame>
     </div>

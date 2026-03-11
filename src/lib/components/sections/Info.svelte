@@ -70,6 +70,9 @@
     text-transform: uppercase;
     color: var(--color-secondary);
     text-align: left;
+    text-shadow:
+      1px 1px 0 rgba(0, 0, 0, 0.65),
+      0px 2px 4px rgba(0, 0, 0, 0.30);
   }
 
   .credits-link {
