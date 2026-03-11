@@ -1,7 +1,6 @@
 <script lang='ts'>
   import Footer from '$lib/components/layout/Footer.svelte'
   import Menu from '$lib/components/layout/Menu.svelte'
-  import WorkspaceFrame from '$lib/components/layout/Workspace.svelte'
   import Info from '$lib/components/sections/Info.svelte'
   import Works from '$lib/components/sections/Works.svelte'
   import { activeSection, goToSection, initNavigation } from '$lib/navigation'
@@ -37,18 +36,20 @@
   </header>
   <div class='stage'>
     <div class='workspace-wrapper' class:workspace-wrapper--collapsed={isInfo}>
-      <WorkspaceFrame>
-        {#if $activeSection === 'REEL'}
-          <section
-            class='workspace-section'
-            in:fade={{ duration: 300, delay: 150 }}
-          >
-            <h1 class='works-title'>REEL</h1>
-          </section>
-        {:else if $activeSection === 'WORKS'}
-          <Works entryDelay={worksEntryDelay} />
-        {/if}
-      </WorkspaceFrame>
+      <div class='workspace-frame'>
+        <main class='workspace-main'>
+          {#if $activeSection === 'REEL'}
+            <section
+              class='workspace-section'
+              in:fade={{ duration: 300, delay: 150 }}
+            >
+              <h1 class='works-title'>REEL</h1>
+            </section>
+          {:else if $activeSection === 'WORKS'}
+            <Works entryDelay={worksEntryDelay} />
+          {/if}
+        </main>
+      </div>
     </div>
     <div class='footer-wrapper'>
       {#if isInfo}
@@ -87,6 +88,29 @@
     padding-top: 0;
     padding-bottom: 0;
     pointer-events: none;
+  }
+
+  .workspace-frame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: var(--color-secondary);
+    position: relative;
+    isolation: isolate;
+  }
+
+  .workspace-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 1279px) {
+    .workspace-main {
+      padding: 0px;
+    }
   }
 
   .workspace-section {

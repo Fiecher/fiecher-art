@@ -91,7 +91,7 @@ export const WORKS: Work[] = [
     main: {
       type: 'video',
       src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test3/Preview.jpg`',
+      poster: '/works/test3/Preview.jpg',
     },
   },
   {
@@ -102,36 +102,6 @@ export const WORKS: Work[] = [
       type: 'video',
       src: '/works/symptom-bulletin/TheBulletin.mp4',
       poster: '/works/test4/Preview.jpg',
-    },
-  },
-  {
-    id: 'test5',
-    title: 'test5',
-    year: 2024,
-    main: {
-      type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test5/Preview.jpg',
-    },
-  },
-  {
-    id: 'test6',
-    title: 'test6',
-    year: 2024,
-    main: {
-      type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test6/Preview.jpg',
-    },
-  },
-  {
-    id: 'test7',
-    title: 'test7',
-    year: 2024,
-    main: {
-      type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test7/Preview.jpg',
     },
   },
 ]

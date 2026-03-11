@@ -1,6 +1,6 @@
 <script lang='ts'>
   import LoadingScreen from '$lib/components/layout/LoadingScreen.svelte'
-  import WorkModal from '$lib/components/layout/WorkModal.svelte'
+  import WorkModal from '$lib/components/layout/Viewer.svelte'
   import { modalCell } from '$lib/modal'
   import { activeSection, globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
   import { get } from 'svelte/store'
