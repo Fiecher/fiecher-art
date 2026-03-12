@@ -242,7 +242,7 @@
           </div>
           {#if cell.title}
             <div class='cell-title' aria-hidden='true' style={`border-radius:${frameR}px`}>
-              <span style={`font-size:${titleFs}rem`}>{cell.title}</span>
+              <span style={`font-size:${titleFs * 1.5}rem`}>{cell.title}</span>
             </div>
           {/if}
           <div class='sheen' aria-hidden='true' bind:this={sheenEls[i]}></div>
@@ -281,23 +281,6 @@
   .film-strip--dragging {
     cursor: grabbing;
     user-select: none;
-  }
-
-  .film-strip::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    pointer-events: none;
-
-    background-image:
-      radial-gradient(circle, rgba(11, 10, 9, 0.50) 1.0px, transparent 1.0px),
-      radial-gradient(circle, rgba(11, 10, 9, 0.50) 1.0px, transparent 1.0px);
-    background-size: 5px 5px;
-    background-position: 0px 0px, 2.5px 2.5px;
-
-    mix-blend-mode: multiply;
-    opacity: 1;
   }
 
   .strip-track {
@@ -347,6 +330,26 @@
     box-shadow: inset 0 0 12px rgba(0,0,0,0.35);
   }
 
+  .cell-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+
+  background-image:
+    radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px),
+    radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px);
+
+  background-size: 5px 5px;
+  background-position: 0 0, 2.5px 2.5px;
+
+  mix-blend-mode: multiply;
+  opacity: 1;
+
+  border-radius: inherit;
+}
+
   .cell-frame img,
   .frame-placeholder {
     width: 100%; height: 100%;
@@ -384,7 +387,7 @@
   .film-cell:focus-visible .cell-title { opacity: 1; }
   .cell-title span {
     font-family: var(--font-main);
-    letter-spacing: 0.2em;
+    letter-spacing: 0.1em;
     color: var(--color-secondary);
     text-align: center;
     padding: 0 8px;

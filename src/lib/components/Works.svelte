@@ -347,7 +347,7 @@
 
   .dot-nav {
     position: absolute;
-    bottom: 14px;
+    bottom: 15px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
@@ -362,10 +362,9 @@
   }
 
   .dot-btn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     padding: 0;
-    margin: 0;
     border: none;
     background: transparent;
     cursor: pointer;
@@ -381,7 +380,7 @@
     justify-content: center;
     width: 45px;
     height: 30px;
-    border: 1px solid white;
+    border: 1px solid var(--color-secondary);
     position: relative;
     opacity: 0.35;
     transition: opacity 0.2s ease;
@@ -391,7 +390,7 @@
     font-family: var(--font-secondary);
     font-size: 1rem;
     font-weight: 700;
-    color: white;
+    color: var(--color-secondary);
     line-height: 1;
     user-select: none;
   }
@@ -402,15 +401,15 @@
 
   .dot-btn--active .dot-frame {
     opacity: 1;
-    background: white;
+    background: var(--color-secondary);
   }
 
   .dot-btn--active .dot-frame__num {
-    color: black;
+    color: var(--color-primary);
   }
 
   .dot-btn:focus-visible .dot-frame {
-    outline: 2px solid white;
+    outline: 2px solid var(--color-secondary);
     outline-offset: 3px;
     opacity: 0.9;
   }
