@@ -192,13 +192,23 @@
   .menu-text::before { right: 50%; transform-origin: right bottom; }
   .menu-text::after  { left: 50%;  transform-origin: left bottom; }
 
-  .menu-text:hover::before, .menu-text:hover::after,
-  .menu-text--active::before, .menu-text--active::after { width: 50%; }
+@media (hover: hover) and (pointer: fine) {
 
-  .menu-text:hover { transform: scale(1.05); }
+  .menu-text:hover::before,
+  .menu-text:hover::after {
+    width: 50%;
+  }
+
+  .menu-text:hover {
+    transform: scale(1.05);
+  }
 
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
-  .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { width: 0; }
+  .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after {
+    width: 0;
+  }
+
+}
 
   .menu-collapsed {
     display: none;
