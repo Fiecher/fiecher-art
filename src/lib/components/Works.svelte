@@ -13,6 +13,9 @@
 
   const CELLS_PER_STRIP = 2
   const sectionCount = WORK_PAGE_COUNT
+  const ANIM_MS = 700
+  const SWIPE_MIN_PX = 45
+  const SWIPE_MAX_MS = 500
 
   type Cell = { id: string, title: string, image: string }
 
@@ -44,7 +47,6 @@
 
   const stripGap = $derived(Math.round(stageH * GAP_RATIO))
   const slotH = $derived(Math.round((stageH - stripGap) / 2))
-
   const cellSize = $derived((() => {
     if (stageW <= 0 || stageH <= 0)
       return 180
@@ -54,9 +56,7 @@
   })())
 
   const initialSection = Math.max(0, Math.min(get(worksPage), sectionCount - 1))
-
   let currentSection = $state(initialSection)
-  const ANIM_MS = 700
 
   let reelTop = $state<ReturnType<typeof FilmReel> | null>(null)
   let reelBot = $state<ReturnType<typeof FilmReel> | null>(null)
@@ -73,20 +73,18 @@
       return
     }
 
-    let delta: number
-    if (direction !== 0) {
-      const linearDelta = clamped - currentSection
-      delta = linearDelta
-      if (direction > 0 && delta <= 0)
-        delta += sectionCount
-      if (direction < 0 && delta >= 0)
-        delta -= sectionCount
-    } else {
-      delta = clamped - currentSection
-    }
+    let delta = direction !== 0 ?
+      (() => {
+        const d = clamped - currentSection
+        if (direction > 0 && d <= 0)
+          return d + sectionCount
+        if (direction < 0 && d >= 0)
+          return d - sectionCount
+        return d
+      })() :
+        clamped - currentSection
 
     const px = delta * CELLS_PER_STRIP * cellSize
-
     isAnimating = true
     currentSection = clamped
     reelTop?.scrollBy(px, ANIM_MS)
@@ -120,17 +118,13 @@
   let mouseDragDistance = 0
 
   function handleCellClick(id: string) {
-    if (isAnimating)
-      return
-    if (mouseDragDistance > 6)
+    if (isAnimating || mouseDragDistance > 6)
       return
     const work = WORKS.find(w => w.id === id)
     if (work)
       openModal(work)
   }
 
-  const SWIPE_MIN_PX = 45
-  const SWIPE_MAX_MS = 500
   let touchOrigin = { x: 0, y: 0, t: 0 }
 
   function onTouchStart(e: TouchEvent) {
@@ -146,9 +140,10 @@
     const dy = touchOrigin.y - ch.clientY
     const adx = Math.abs(dx)
     const ady = Math.abs(dy)
+
     if (adx >= SWIPE_MIN_PX && adx > ady) {
       e.stopPropagation()
-      const direction = dx > 0 ? 1 : -1 as 1 | -1
+      const direction = (dx > 0 ? 1 : -1) as 1 | -1
       const next = (currentSection + direction + sectionCount) % sectionCount
       updateWorksPage(next)
       navigateTo(next, direction)
@@ -174,7 +169,7 @@
     reelBot?.onDragStart(e.clientX)
   }
 
-  function onMouseMove(e: MouseEvent) {
+  function onGlobalMouseMove(e: MouseEvent) {
     if (!mouseDragging)
       return
     const delta = e.clientX - mouseDragStartX
@@ -183,9 +178,13 @@
     reelBot?.onDragMove(mouseDragStartX - delta)
   }
 
-  function snapAfterDrag(endX: number) {
+  function onGlobalMouseUp(e: MouseEvent) {
     if (!mouseDragging)
       return
+    snapAfterDrag(e.clientX)
+  }
+
+  function snapAfterDrag(endX: number) {
     mouseDragging = false
     reelTop?.onDragEnd()
     reelBot?.onDragEnd()
@@ -193,13 +192,9 @@
     const draggedPx = endX - mouseDragStartX
     const sectionsPx = CELLS_PER_STRIP * cellSize
     const rawTarget = mouseDragStartSection - draggedPx / sectionsPx
-    const snapped = Math.round(rawTarget)
-    const target = ((snapped % sectionCount) + sectionCount) % sectionCount
+    const target = ((Math.round(rawTarget) % sectionCount) + sectionCount) % sectionCount
 
-    const currentPx = draggedPx
-    const targetPx = (mouseDragStartSection - target) * sectionsPx
-    const remainingPx = targetPx - currentPx
-
+    const remainingPx = (mouseDragStartSection - target) * sectionsPx - draggedPx
     reelTop?.scrollBy(remainingPx, 450)
     reelBot?.scrollBy(-remainingPx, 450)
 
@@ -207,14 +202,6 @@
       currentSection = target
       updateWorksPage(target)
     }
-  }
-
-  function onMouseUp(e: MouseEvent) {
-    snapAfterDrag(e.clientX)
-  }
-
-  function onMouseLeave(e: MouseEvent) {
-    snapAfterDrag(e.clientX)
   }
 
   onMount(() => {
@@ -233,9 +220,15 @@
       stageH = stageEl.offsetHeight
     }
 
+    window.addEventListener('mousemove', onGlobalMouseMove)
+    window.addEventListener('mouseup', onGlobalMouseUp)
     mounted = true
 
-    return () => ro.disconnect()
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('mousemove', onGlobalMouseMove)
+      window.removeEventListener('mouseup', onGlobalMouseUp)
+    }
   })
 </script>
 
@@ -250,9 +243,6 @@
     class:strips-stage--dragging={mouseDragging}
     bind:this={stageEl}
     onmousedown={onMouseDown}
-    onmousemove={onMouseMove}
-    onmouseup={onMouseUp}
-    onmouseleave={onMouseLeave}
   >
     <div class='strip-slot' style={`height:${slotH}px; top:0`}>
       <FilmReel
@@ -303,7 +293,6 @@
 </div>
 
 <style>
-
   .works {
     display: flex;
     flex-direction: column;
@@ -395,18 +384,14 @@
     user-select: none;
   }
 
-  .dot-btn:hover .dot-frame {
-    opacity: 0.65;
-  }
+  .dot-btn:hover .dot-frame { opacity: 0.65; }
 
   .dot-btn--active .dot-frame {
     opacity: 1;
     background: var(--color-secondary);
   }
 
-  .dot-btn--active .dot-frame__num {
-    color: var(--color-primary);
-  }
+  .dot-btn--active .dot-frame__num { color: var(--color-primary); }
 
   .dot-btn:focus-visible .dot-frame {
     outline: 2px solid var(--color-secondary);
@@ -415,9 +400,6 @@
   }
 
   @media (max-width: 480px) {
-    .dot-btn {
-      width: 48px;
-      height: 48px;
-    }
+    .dot-btn { width: 48px; height: 48px; }
   }
 </style>
