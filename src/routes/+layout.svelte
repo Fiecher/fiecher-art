@@ -108,7 +108,8 @@
       return
     const dx = touch.x - e.changedTouches[0].clientX
     const dy = touch.y - e.changedTouches[0].clientY
-    const adx = Math.abs(dx); const ady = Math.abs(dy)
+    const adx = Math.abs(dx)
+    const ady = Math.abs(dy)
     let delta = 0
     if (ady >= adx && ady >= SWIPE_MIN_PX)
       delta = dy > 0 ? 1 : -1

@@ -29,6 +29,11 @@
   }
 
   onMount(() => {
+    if (navigator.webdriver || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onDone()
+      return
+    }
+
     setProgress(0.03)
 
     let fontsOk = false
