@@ -70,5 +70,5 @@ body::after {
     rgba(3, 2, 1, 0.38)  74%,
     rgba(1, 0, 0, 0.72)  100%
   );
-  mix-blend-mode: multiply;
+  background-blend-mode: multiply;
 }

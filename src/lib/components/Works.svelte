@@ -171,7 +171,6 @@
     mouseDragStartSection = currentSection
     mouseDragDistance = 0
     reelTop?.onDragStart(e.clientX)
-    // Bottom reel starts mirrored — invert the start point
     reelBot?.onDragStart(e.clientX)
   }
 
@@ -191,14 +190,12 @@
     reelTop?.onDragEnd()
     reelBot?.onDragEnd()
 
-    // Determine target section from how far user dragged
     const draggedPx = endX - mouseDragStartX
     const sectionsPx = CELLS_PER_STRIP * cellSize
     const rawTarget = mouseDragStartSection - draggedPx / sectionsPx
     const snapped = Math.round(rawTarget)
     const target = ((snapped % sectionCount) + sectionCount) % sectionCount
 
-    // scrollBy from current dragged offset to target
     const currentPx = draggedPx
     const targetPx = (mouseDragStartSection - target) * sectionsPx
     const remainingPx = targetPx - currentPx
@@ -221,8 +218,6 @@
   }
 
   onMount(() => {
-    // Sync the global store so scrollbar and layout agree with
-    // the section we derived before mount.
     updateWorksPage(initialSection)
 
     const ro = new ResizeObserver(entries => {
@@ -238,7 +233,6 @@
       stageH = stageEl.offsetHeight
     }
 
-    // Only now allow the $worksPage effect to drive navigation.
     mounted = true
 
     return () => ro.disconnect()
