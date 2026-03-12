@@ -156,6 +156,8 @@
   let mouseDragging = false
   let mouseDragStartX = 0
   let mouseDragStartSection = 0
+  let pendingMouseX: number | null = null
+  let dragRafId = 0
 
   function onMouseDown(e: MouseEvent) {
     if (e.button !== 0)
@@ -167,20 +169,37 @@
     mouseDragDistance = 0
     reelTop?.onDragStart(e.clientX)
     reelBot?.onDragStart(e.clientX)
+    window.addEventListener('mousemove', onGlobalMouseMove)
+    window.addEventListener('mouseup', onGlobalMouseUp)
   }
 
   function onGlobalMouseMove(e: MouseEvent) {
-    if (!mouseDragging)
+    pendingMouseX = e.clientX
+    if (dragRafId)
       return
-    const delta = e.clientX - mouseDragStartX
+    dragRafId = requestAnimationFrame(flushDragMove)
+  }
+
+  function flushDragMove() {
+    dragRafId = 0
+    if (!mouseDragging || pendingMouseX === null)
+      return
+    const x = pendingMouseX
+    pendingMouseX = null
+    const delta = x - mouseDragStartX
     mouseDragDistance = Math.abs(delta)
-    reelTop?.onDragMove(e.clientX)
+    reelTop?.onDragMove(x)
     reelBot?.onDragMove(mouseDragStartX - delta)
   }
 
   function onGlobalMouseUp(e: MouseEvent) {
-    if (!mouseDragging)
-      return
+    window.removeEventListener('mousemove', onGlobalMouseMove)
+    window.removeEventListener('mouseup', onGlobalMouseUp)
+    if (dragRafId) {
+      cancelAnimationFrame(dragRafId)
+      dragRafId = 0
+    }
+    pendingMouseX = null
     snapAfterDrag(e.clientX)
   }
 
@@ -220,12 +239,11 @@
       stageH = stageEl.offsetHeight
     }
 
-    window.addEventListener('mousemove', onGlobalMouseMove)
-    window.addEventListener('mouseup', onGlobalMouseUp)
     mounted = true
 
     return () => {
       ro.disconnect()
+      cancelAnimationFrame(dragRafId)
       window.removeEventListener('mousemove', onGlobalMouseMove)
       window.removeEventListener('mouseup', onGlobalMouseUp)
     }

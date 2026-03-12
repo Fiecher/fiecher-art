@@ -2,27 +2,22 @@
   --color-primary: rgba(11, 10, 9, 1);
   --color-secondary: rgba(223, 225, 215, 1);
   --color-accent: rgba(255, 64, 0, 1);
-
   --font-main: 'Bebas Neue', sans-serif;
   --font-secondary: 'Trade Gothic LT Std', Arial, sans-serif;
 }
-
 html, body {
   height: 100%;
   overflow: hidden;
 }
-
 body {
   background-color: var(--color-primary);
   isolation: isolate;
 }
-
 @media (max-width: 768px) {
   .workspace-wrapper { padding-inline: 16px; }
   .footer-wrapper { padding-inline: 16px; }
   .works-title { font-size: 3rem; }
 }
-
 .page-shell {
   display: flex;
   flex-direction: column;
@@ -39,12 +34,10 @@ body {
   -webkit-mask-mode: luminance;
           mask-mode: luminance;
 }
-
 .page-header {
   padding: 20px 23px 0 23px;
   position: relative;
 }
-
 .poster-paper {
   position: absolute;
   inset: 0;
@@ -56,19 +49,4 @@ body {
   background-repeat: no-repeat;
   mix-blend-mode: multiply;
   opacity: 0.82;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9002;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 110% 110% at 50% 50%,
-    transparent          45%,
-    rgba(3, 2, 1, 0.38)  74%,
-    rgba(1, 0, 0, 0.72)  100%
-  );
-  background-blend-mode: multiply;
 }

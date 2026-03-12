@@ -33,6 +33,7 @@
     let fontsOk = false
     let assetsOk = false
     let paintOk = false
+    let pageOk = false
     let finished = false
 
     async function finish() {
@@ -45,7 +46,7 @@
     }
 
     function check() {
-      if (fontsOk && assetsOk && paintOk)
+      if (fontsOk && assetsOk && paintOk && pageOk)
         finish()
     }
 
@@ -73,11 +74,18 @@
           new Promise<void>(resolve => {
             const img = new Image()
             const timer = window.setTimeout(resolve, 10_000)
-            img.onload = img.onerror = () => {
+            img.onload = () => {
+              img.decode?.().catch(() => {}).finally(() => {
+                clearTimeout(timer)
+                loaded++
+                const base = i === 0 ? 0.15 : 0.1
+                setProgress(base + (loaded / total) * 0.75)
+                resolve()
+              })
+            }
+            img.onerror = () => {
               clearTimeout(timer)
               loaded++
-              const base = i === 0 ? 0.15 : 0.1
-              setProgress(base + (loaded / total) * 0.85)
               resolve()
             }
             img.src = src
@@ -95,6 +103,18 @@
         check()
       }),
     )
+
+    function onPageReady() {
+      pageOk = true
+      setProgress(0.9)
+      check()
+    }
+
+    if (document.readyState === 'complete') {
+      onPageReady()
+    } else {
+      window.addEventListener('load', onPageReady, { once: true })
+    }
 
     setTimeout(() => finish(), 12_000)
   })
