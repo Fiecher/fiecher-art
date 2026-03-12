@@ -1,4 +1,5 @@
 <script lang='ts'>
+  import { base } from '$app/paths'
   import LoadingScreen from '$lib/components/LoadingScreen.svelte'
   import WorkModal from '$lib/components/Viewer.svelte'
   import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
@@ -81,23 +82,19 @@
     requestAnimationFrame(() => {
       wheelPending = false
     })
-
     const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX
     if (Math.abs(d) < 5)
       return
-
     const current = Math.round($globalProgress * TOTAL_STEPS)
     const next = Math.max(0, Math.min(TOTAL_STEPS, current + (d > 0 ? 1 : -1)))
     if (next === current)
       return
-
     const { section, pageIndex } = progressToTarget(next / TOTAL_STEPS)
     goToSection(section, pageIndex ?? null)
   }
 
   const SWIPE_MIN_PX = 45
   const SWIPE_MAX_MS = 500
-
   let touch = { x: 0, y: 0, t: 0 }
 
   function onTouchStart(e: TouchEvent) {
@@ -109,24 +106,18 @@
       return
     if (Date.now() - touch.t > SWIPE_MAX_MS)
       return
-
     const dx = touch.x - e.changedTouches[0].clientX
     const dy = touch.y - e.changedTouches[0].clientY
-    const adx = Math.abs(dx)
-    const ady = Math.abs(dy)
-
+    const adx = Math.abs(dx); const ady = Math.abs(dy)
     let delta = 0
     if (ady >= adx && ady >= SWIPE_MIN_PX)
       delta = dy > 0 ? 1 : -1
-
     if (delta === 0)
       return
-
     const current = Math.round($globalProgress * TOTAL_STEPS)
     const next = Math.max(0, Math.min(TOTAL_STEPS, current + delta))
     if (next === current)
       return
-
     const { section: nextSection, pageIndex: nextPage } = progressToTarget(next / TOTAL_STEPS)
     goToSection(nextSection, nextPage ?? null)
   }
@@ -150,7 +141,11 @@
     <div class='poster-sticky'>
       <div class='poster'>
         {@render children()}
-        <div class='poster-paper' aria-hidden='true'></div>
+        <div
+          class='poster-paper'
+          aria-hidden='true'
+          style={`background-image: url('${base}/textures/paper.jpg')`}
+        ></div>
       </div>
     </div>
   </div>
@@ -191,5 +186,16 @@
     display: flex;
     flex-direction: column;
     position: relative;
+  }
+  .poster-paper {
+    position: absolute;
+    inset: 0;
+    z-index: 9000;
+    pointer-events: none;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.82;
   }
 </style>

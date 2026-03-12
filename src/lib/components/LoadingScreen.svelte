@@ -2,11 +2,12 @@
   interface Props { onDone: () => void }
   const { onDone }: Props = $props()
 
+  import { base } from '$app/paths'
   import { WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
   const ASSET_URLS = [
-    '/textures/paper.jpg',
+    `${base}/textures/paper.jpg`,
     ...WORKS
       .map(w => w.main.poster ?? w.main.src)
       .filter((src, i, arr) => arr.indexOf(src) === i),
@@ -78,8 +79,8 @@
               img.decode?.().catch(() => {}).finally(() => {
                 clearTimeout(timer)
                 loaded++
-                const base = i === 0 ? 0.15 : 0.1
-                setProgress(base + (loaded / total) * 0.75)
+                const b = i === 0 ? 0.15 : 0.1
+                setProgress(b + (loaded / total) * 0.75)
                 resolve()
               })
             }
@@ -121,7 +122,6 @@
 </script>
 
 <div class='loader' aria-label='Loading' aria-live='polite'>
-
   <svg
     class='reel'
     viewBox='0 0 200 200'
@@ -131,24 +131,18 @@
     xmlns='http://www.w3.org/2000/svg'
   >
     <circle cx='100' cy='100' r='96' class='reel-body' />
-
     {#each { length: 6 } as _, i}
       <circle cx='100' cy='40' r='26' class='reel-hole' transform={`rotate(${i * 60} 100 100)`} />
     {/each}
-
     <circle cx='100' cy='100' r='24' class='reel-core' />
-
     {#each { length: 6 } as _, i}
       <circle cx='100' cy='78' r='5' class='reel-bolt' transform={`rotate(${i * 60} 100 100)`} />
     {/each}
-
     <circle cx='100' cy='100' r='10' class='reel-center' />
   </svg>
-
   <div class='bar'>
     <div class='bar-fill' style={`width:${progress * 100}%`}></div>
   </div>
-
 </div>
 
 <style>
@@ -164,27 +158,18 @@
   gap: 48px;
   isolation: isolate;
 }
-
-.reel {
-  animation: spin 3.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
+.reel { animation: spin 3.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .reel-body {
   fill: var(--color-secondary);
   filter:
     drop-shadow(0 0 6px rgba(223,225,215,0.08))
     drop-shadow(0 0 2px rgba(0,0,0,0.4));
 }
-
 .reel-hole   { fill: var(--color-primary); }
 .reel-core   { fill: var(--color-secondary); }
 .reel-bolt   { fill: var(--color-primary); }
 .reel-center { fill: var(--color-primary); }
-
 .bar {
   width: 220px;
   height: 4px;
@@ -192,7 +177,6 @@
   overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
-
 .bar-fill {
   height: 100%;
   background: linear-gradient(
