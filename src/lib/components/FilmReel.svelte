@@ -113,7 +113,6 @@
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
 
   onMount(() => {
-    const cs = cellSize > 0 ? cellSize : 1
     offsetCells = normalizeCells(-segmentLen)
 
     if (entryX !== 0) {
@@ -229,13 +228,19 @@
         <div class='cell-frame' style={`border-radius:${frameR}px; margin:${framePad}px ${frameM}px`}>
           <div class='frame-inner' class:frame-inner--pressed={pressedIdx === i}>
             {#if cell.image}
-              <img
-                src={cell.image}
-                alt={cell.title ?? ''}
-                draggable='false'
-                loading='lazy'
-                style={`border-radius:${frameR}px`}
-              />
+              <div
+                class='img-wrap'
+                style={`border-radius:${frameR}px; font-size:${Math.max(0.5, titleFs * 0.9)}rem`}
+              >
+                {cell.title ?? ''}
+                <img
+                  src={cell.image}
+                  alt=''
+                  draggable='false'
+                  loading='lazy'
+                  style={`border-radius:${frameR}px`}
+                />
+              </div>
             {:else}
               <div class='frame-placeholder' style={`border-radius:${frameR}px`}></div>
             {/if}
@@ -331,32 +336,52 @@
   }
 
   .cell-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    background-image:
+      radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px),
+      radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px);
+    background-size: 5px 5px;
+    background-position: 0 0, 2.5px 2.5px;
+    mix-blend-mode: multiply;
+    opacity: 1;
+    border-radius: inherit;
+  }
 
-  background-image:
-    radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px),
-    radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px);
+  .img-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px;
+    font-family: var(--font-main);
+    letter-spacing: 0.08em;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    word-break: break-word;
+    line-height: 1.3;
+  }
 
-  background-size: 5px 5px;
-  background-position: 0 0, 2.5px 2.5px;
-
-  mix-blend-mode: multiply;
-  opacity: 1;
-
-  border-radius: inherit;
-}
-
-  .cell-frame img,
-  .frame-placeholder {
-    width: 100%; height: 100%;
+  .img-wrap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
+    background: var(--color-secondary);
   }
-  .frame-placeholder { background: var(--color-secondary); }
+
+  .frame-placeholder {
+    position: absolute;
+    inset: 0;
+    background: var(--color-secondary);
+  }
 
   .frame-inner {
     position: absolute;
@@ -414,5 +439,4 @@
     width: 40%;
     transform: translateX(-250%) skewX(-15deg);
   }
-
 </style>
