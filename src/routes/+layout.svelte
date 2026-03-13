@@ -2,7 +2,7 @@
   import { base } from '$app/paths'
   import LoadingScreen from '$lib/components/LoadingScreen.svelte'
   import WorkModal from '$lib/components/Viewer.svelte'
-  import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import { globalProgress, goToSection, isTransitioning, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
   import { isVideoFullscreen, modalCell } from '$lib/viewer'
   import { get } from 'svelte/store'
   import './layout.css'
@@ -63,7 +63,7 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || programmaticScroll || get(modalCell) || get(isVideoFullscreen))
+    if (!scrollEl || programmaticScroll || isBlocked())
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
@@ -71,23 +71,42 @@
     goToSection(section, pageIndex ?? null)
   }
 
-  let wheelPending = false
+  function isBlocked() {
+    return get(modalCell) || get(isVideoFullscreen) || get(isTransitioning)
+  }
+
+  let wheelAccum = 0
+  let wheelTimer = 0
+  const WHEEL_THRESHOLD = 60
+  const WHEEL_RESET_MS = 200
 
   function onWheel(e: WheelEvent) {
     e.preventDefault()
-    if (get(modalCell) || get(isVideoFullscreen))
+    if (isBlocked())
       return
-    if (wheelPending)
-      return
-    wheelPending = true
-    requestAnimationFrame(() => {
-      wheelPending = false
-    })
+
     const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-    if (Math.abs(d) < 5)
+    if (Math.abs(d) < 1)
       return
+
+    const px = e.deltaMode === 1 ? d * 40 : e.deltaMode === 2 ? d * 800 : d
+
+    wheelAccum += px
+
+    clearTimeout(wheelTimer)
+    wheelTimer = window.setTimeout(() => {
+      wheelAccum = 0
+    }, WHEEL_RESET_MS)
+
+    if (Math.abs(wheelAccum) < WHEEL_THRESHOLD)
+      return
+
+    const dir = wheelAccum > 0 ? 1 : -1
+    wheelAccum = 0
+    clearTimeout(wheelTimer)
+
     const current = Math.round($globalProgress * TOTAL_STEPS)
-    const next = Math.max(0, Math.min(TOTAL_STEPS, current + (d > 0 ? 1 : -1)))
+    const next = Math.max(0, Math.min(TOTAL_STEPS, current + dir))
     if (next === current)
       return
     const { section, pageIndex } = progressToTarget(next / TOTAL_STEPS)
@@ -95,7 +114,7 @@
   }
 
   const SWIPE_MIN_PX = 45
-  const SWIPE_MAX_MS = 500
+  const SWIPE_MAX_MS = 600
   let touch = { x: 0, y: 0, t: 0 }
 
   function onTouchStart(e: TouchEvent) {
@@ -103,7 +122,7 @@
   }
 
   function onTouchEnd(e: TouchEvent) {
-    if (get(modalCell) || get(isVideoFullscreen))
+    if (isBlocked())
       return
     if (Date.now() - touch.t > SWIPE_MAX_MS)
       return
