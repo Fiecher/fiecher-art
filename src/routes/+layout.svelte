@@ -2,7 +2,7 @@
   import { base } from '$app/paths'
   import LoadingScreen from '$lib/components/LoadingScreen.svelte'
   import WorkModal from '$lib/components/Viewer.svelte'
-  import { globalProgress, goToSection, isTransitioning, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
   import { isVideoFullscreen, modalCell } from '$lib/viewer'
   import { get } from 'svelte/store'
   import './layout.css'
@@ -63,7 +63,7 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || programmaticScroll || isBlocked())
+    if (!scrollEl || programmaticScroll || get(modalCell) || get(isVideoFullscreen))
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
@@ -72,39 +72,10 @@
   }
 
   function isBlocked() {
-    return get(modalCell) || get(isVideoFullscreen) || get(isTransitioning)
+    return get(modalCell) || get(isVideoFullscreen)
   }
 
-  let wheelAccum = 0
-  let wheelTimer = 0
-  const WHEEL_THRESHOLD = 60
-  const WHEEL_RESET_MS = 200
-
-  function onWheel(e: WheelEvent) {
-    e.preventDefault()
-    if (isBlocked())
-      return
-
-    const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-    if (Math.abs(d) < 1)
-      return
-
-    const px = e.deltaMode === 1 ? d * 40 : e.deltaMode === 2 ? d * 800 : d
-
-    wheelAccum += px
-
-    clearTimeout(wheelTimer)
-    wheelTimer = window.setTimeout(() => {
-      wheelAccum = 0
-    }, WHEEL_RESET_MS)
-
-    if (Math.abs(wheelAccum) < WHEEL_THRESHOLD)
-      return
-
-    const dir = wheelAccum > 0 ? 1 : -1
-    wheelAccum = 0
-    clearTimeout(wheelTimer)
-
+  function tryNavigate(dir: 1 | -1) {
     const current = Math.round($globalProgress * TOTAL_STEPS)
     const next = Math.max(0, Math.min(TOTAL_STEPS, current + dir))
     if (next === current)
@@ -113,7 +84,25 @@
     goToSection(section, pageIndex ?? null)
   }
 
-  const SWIPE_MIN_PX = 45
+  let lastWheelStep = 0
+  const WHEEL_COOLDOWN_MS = 100
+
+  function onWheel(e: WheelEvent) {
+    e.preventDefault()
+    if (isBlocked())
+      return
+    const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX
+    const px = e.deltaMode === 1 ? d * 40 : e.deltaMode === 2 ? d * 800 : d
+    if (Math.abs(px) < 10)
+      return
+    const now = Date.now()
+    if (now - lastWheelStep < WHEEL_COOLDOWN_MS)
+      return
+    lastWheelStep = now
+    tryNavigate(px > 0 ? 1 : -1)
+  }
+
+  const SWIPE_MIN_PX = 40
   const SWIPE_MAX_MS = 600
   let touch = { x: 0, y: 0, t: 0 }
 
@@ -130,17 +119,8 @@
     const dy = touch.y - e.changedTouches[0].clientY
     const adx = Math.abs(dx)
     const ady = Math.abs(dy)
-    let delta = 0
     if (ady >= adx && ady >= SWIPE_MIN_PX)
-      delta = dy > 0 ? 1 : -1
-    if (delta === 0)
-      return
-    const current = Math.round($globalProgress * TOTAL_STEPS)
-    const next = Math.max(0, Math.min(TOTAL_STEPS, current + delta))
-    if (next === current)
-      return
-    const { section: nextSection, pageIndex: nextPage } = progressToTarget(next / TOTAL_STEPS)
-    goToSection(nextSection, nextPage ?? null)
+      tryNavigate(dy > 0 ? 1 : -1)
   }
 </script>
 
