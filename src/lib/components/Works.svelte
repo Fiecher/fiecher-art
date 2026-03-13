@@ -8,8 +8,9 @@
 
   interface Props {
     entryDelay?: number
+    overlay?: boolean
   }
-  const { entryDelay = 0 }: Props = $props()
+  const { entryDelay = 0, overlay = false }: Props = $props()
 
   const CELLS_PER_STRIP = 2
   const sectionCount = WORK_PAGE_COUNT
@@ -253,6 +254,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class='works'
+  class:works--overlay={overlay}
   ontouchstart={onTouchStart}
   ontouchend={onTouchEnd}
 >
@@ -322,6 +324,10 @@
     isolation: isolate;
   }
 
+  .works--overlay {
+    background: rgba(223, 225, 215, 0.12);
+  }
+
   .works::before {
     content: '';
     position: absolute;
@@ -369,8 +375,8 @@
   }
 
   .dot-btn {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     padding: 0;
     border: none;
     background: transparent;
@@ -386,16 +392,16 @@
     align-items: center;
     justify-content: center;
     width: 45px;
-    height: 30px;
+    height: 45px;
     border: 1px solid var(--color-secondary);
     position: relative;
-    opacity: 0.35;
+    opacity: 0.45;
     transition: opacity 0.2s ease;
   }
 
   .dot-frame__num {
     font-family: var(--font-secondary);
-    font-size: 1rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-secondary);
     line-height: 1;

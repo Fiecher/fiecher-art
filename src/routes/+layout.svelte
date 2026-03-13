@@ -3,7 +3,7 @@
   import LoadingScreen from '$lib/components/LoadingScreen.svelte'
   import WorkModal from '$lib/components/Viewer.svelte'
   import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
-  import { modalCell } from '$lib/viewer'
+  import { isVideoFullscreen, modalCell } from '$lib/viewer'
   import { get } from 'svelte/store'
   import './layout.css'
 
@@ -12,6 +12,7 @@
   let loaded = $state(false)
   function onLoaderDone() {
     loaded = true
+    window.dispatchEvent(new CustomEvent('app:loaded'))
   }
 
   const STEP_PX = 500
@@ -62,7 +63,7 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || programmaticScroll || get(modalCell))
+    if (!scrollEl || programmaticScroll || get(modalCell) || get(isVideoFullscreen))
       return
     const step = Math.round(scrollEl.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
@@ -74,7 +75,7 @@
 
   function onWheel(e: WheelEvent) {
     e.preventDefault()
-    if (get(modalCell))
+    if (get(modalCell) || get(isVideoFullscreen))
       return
     if (wheelPending)
       return
@@ -102,7 +103,7 @@
   }
 
   function onTouchEnd(e: TouchEvent) {
-    if (get(modalCell))
+    if (get(modalCell) || get(isVideoFullscreen))
       return
     if (Date.now() - touch.t > SWIPE_MAX_MS)
       return

@@ -6,12 +6,14 @@
   import { WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
-  const ASSET_URLS = [
+  const IMAGE_URLS = [
     `${base}/textures/paper.jpg`,
     ...WORKS
       .map(w => w.main.poster ?? w.main.src)
       .filter((src, i, arr) => arr.indexOf(src) === i),
   ]
+
+  const REEL_URL = `${base}/reel/reel.mp4`
 
   let progress = $state(0)
 
@@ -38,6 +40,7 @@
 
     let fontsOk = false
     let assetsOk = false
+    let videoOk = false
     let paintOk = false
     let pageOk = false
     let finished = false
@@ -52,7 +55,7 @@
     }
 
     function check() {
-      if (fontsOk && assetsOk && paintOk && pageOk)
+      if (fontsOk && assetsOk && videoOk && paintOk && pageOk)
         finish()
     }
 
@@ -62,7 +65,7 @@
       document.fonts.ready,
     ]).then(() => {
       fontsOk = true
-      setProgress(0.1)
+      setProgress(0.08)
       check()
     }).catch(() => {
       fontsOk = true
@@ -70,13 +73,12 @@
     })
 
     let loaded = 0
-    const total = ASSET_URLS.length
-
+    const total = IMAGE_URLS.length
     if (total === 0) {
       assetsOk = true
     } else {
       Promise.all(
-        ASSET_URLS.map((src, i) =>
+        IMAGE_URLS.map((src, i) =>
           new Promise<void>(resolve => {
             const img = new Image()
             const timer = window.setTimeout(resolve, 10_000)
@@ -84,8 +86,7 @@
               img.decode?.().catch(() => {}).finally(() => {
                 clearTimeout(timer)
                 loaded++
-                const b = i === 0 ? 0.15 : 0.1
-                setProgress(b + (loaded / total) * 0.75)
+                setProgress(0.1 + (loaded / total) * 0.3)
                 resolve()
               })
             }
@@ -103,6 +104,30 @@
       })
     }
 
+    const vid = document.createElement('video')
+    vid.src = REEL_URL
+    vid.muted = true
+    vid.preload = 'auto'
+    const videoTimer = window.setTimeout(() => {
+      videoOk = true
+      check()
+    }, 8_000)
+
+    vid.addEventListener('canplaythrough', () => {
+      clearTimeout(videoTimer)
+      videoOk = true
+      setProgress(0.85)
+      check()
+    }, { once: true })
+
+    vid.addEventListener('error', () => {
+      clearTimeout(videoTimer)
+      videoOk = true
+      check()
+    }, { once: true })
+
+    vid.load()
+
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         paintOk = true
@@ -110,19 +135,19 @@
       }),
     )
 
+    // 5. Full page load
     function onPageReady() {
       pageOk = true
       setProgress(0.9)
       check()
     }
-
     if (document.readyState === 'complete') {
       onPageReady()
     } else {
       window.addEventListener('load', onPageReady, { once: true })
     }
 
-    setTimeout(() => finish(), 12_000)
+    setTimeout(() => finish(), 15_000)
   })
 </script>
 

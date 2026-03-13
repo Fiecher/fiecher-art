@@ -2,13 +2,13 @@
   import Footer from '$lib/components/Footer.svelte'
   import Info from '$lib/components/Info.svelte'
   import Menu from '$lib/components/Menu.svelte'
+  import Reel from '$lib/components/Reel.svelte'
   import Works from '$lib/components/Works.svelte'
   import { activeSection, goToSection, initNavigation } from '$lib/navigation'
   import { onDestroy, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
   let unsubscribe: (() => void) | null = null
-
   onMount(() => {
     unsubscribe = initNavigation()
   })
@@ -16,18 +16,43 @@
     unsubscribe?.()
   })
 
-  $: isInfo = $activeSection === 'INFO'
+  const isInfo = $derived($activeSection === 'INFO')
+  const isWorks = $derived($activeSection === 'WORKS')
+  const isReel = $derived($activeSection === 'REEL')
 
   let prevSection = $activeSection
-  let worksEntryDelay = 0
-  $: {
+  let worksEntryDelay = $state(0)
+
+  $effect(() => {
     if ($activeSection === 'WORKS' && prevSection === 'INFO') {
       worksEntryDelay = 150
     } else if ($activeSection !== 'WORKS') {
       worksEntryDelay = 0
     }
     prevSection = $activeSection
-  }
+  })
+
+  let reelReady = $state(false)
+  let reelComponent = $state<ReturnType<typeof Reel> | null>(null)
+
+  onMount(() => {
+    const handler = () => {
+      reelReady = true
+    }
+    window.addEventListener('app:loaded', handler, { once: true })
+    return () => window.removeEventListener('app:loaded', handler)
+  })
+
+  $effect(() => {
+    const section = $activeSection
+    if (!reelComponent)
+      return
+    if (section === 'REEL') {
+      reelComponent.play()
+    } else {
+      reelComponent.pause()
+    }
+  })
 </script>
 
 <div class='page-shell'>
@@ -35,23 +60,39 @@
     <Menu activeItem={$activeSection} onSelect={goToSection} />
   </header>
   <div class='stage'>
-    <div class='workspace-wrapper' class:workspace-wrapper--collapsed={isInfo}>
+    <div
+      class='workspace-wrapper'
+      class:workspace-wrapper--collapsed={isInfo}
+    >
       <div class='workspace-frame'>
         <main class='workspace-main'>
-          {#if $activeSection === 'REEL'}
+
+          <section
+            class='workspace-section workspace-section--reel'
+            class:workspace-section--hidden={!isReel && !isWorks}
+            aria-hidden={isInfo}
+          >
+            <Reel
+              bind:this={reelComponent}
+              ready={reelReady}
+              dimmed={!isReel}
+            />
+          </section>
+
+          {#if isWorks}
             <section
-              class='workspace-section'
-              in:fade={{ duration: 300, delay: 150 }}
+              class='workspace-section workspace-section--overlay'
+              in:fade={{ duration: 250, delay: 50 }}
+              out:fade={{ duration: 200 }}
             >
-              <h1 class='works-title'>REEL</h1>
+              <Works entryDelay={worksEntryDelay} overlay={true} />
             </section>
-          {:else if $activeSection === 'WORKS'}
-            <Works entryDelay={worksEntryDelay} />
           {/if}
+
         </main>
       </div>
     </div>
-    <div class='footer-wrapper'>
+    <div class='footer-wrapper' class:footer-wrapper--info={isInfo}>
       {#if isInfo}
         <Info />
       {:else}
@@ -71,7 +112,6 @@
     overflow: hidden;
     min-height: 0;
   }
-
   .workspace-wrapper {
     flex: 1;
     display: flex;
@@ -80,16 +120,16 @@
     padding: 20px;
     transition:
       flex 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-      padding 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      padding 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
   .workspace-wrapper--collapsed {
     flex: 0;
     padding-top: 0;
     padding-bottom: 0;
     pointer-events: none;
+    opacity: 0.3;
   }
-
   .workspace-frame {
     flex: 1;
     display: flex;
@@ -99,36 +139,41 @@
     position: relative;
     isolation: isolate;
   }
-
   .workspace-main {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
   }
-
   @media (max-width: 1279px) {
-    .workspace-main {
-      padding: 0px;
-    }
+    .workspace-main { padding: 0; }
   }
-
   .workspace-section {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
-
-  .works-title {
-    font-family: var(--font-main);
-    font-size: 5rem;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--color-primary);
+  .workspace-section--reel {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
-
+  .workspace-section--hidden {
+    pointer-events: none;
+  }
+  .workspace-section--overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
   .footer-wrapper {
     flex-shrink: 0;
     padding: 0 20px 20px 20px;
