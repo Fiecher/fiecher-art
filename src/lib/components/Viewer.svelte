@@ -133,7 +133,7 @@
   const showBackdrop = $derived(phase !== 'idle')
 
   function reelName(wip: WorkMedia, i: number): string {
-    return wip.name ?? wip.caption ?? `CUT ${i + 1}`
+    return wip.name ?? wip.caption ?? `WIP ${i + 1}`
   }
 </script>
 

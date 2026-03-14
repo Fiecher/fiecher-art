@@ -36,8 +36,8 @@ export default APP_CONFIG
 export const WORKS: Work[] = [
   {
     id: 'symptom-disturbia',
-    title: 'Symptom Disturbia',
-    year: 2024,
+    title: 'Disturbia',
+    year: 2026,
     main: {
       type: 'video',
       src: '/works/symptom-disturbia/Disturbia.mp4',
@@ -46,11 +46,11 @@ export const WORKS: Work[] = [
     wip: [
       {
         type: 'image',
-        src: '/works/symptom-disturbia/wip-01.jpg',
+        src: '/works/symptom-disturbia/model-render.jpg',
       },
       {
         type: 'image',
-        src: '/works/symptom-disturbia/wip-02.jpg',
+        src: '/works/symptom-disturbia/model-viewport.jpg',
       },
     ],
   },
