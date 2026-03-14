@@ -113,14 +113,21 @@ export const WORKS: Work[] = [
     }],
   },
   {
-    id: 'test3',
-    title: 'test3',
-    year: 2024,
+    id: 'revolution-br',
+    title: 'Revolution BR Teaser',
+    year: 2021,
     main: {
       type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test3/Preview.jpg',
+      src: '/works/revolution-br/RevolutionBR.mp4',
+      poster: '/works/revolution-br/Preview.jpg',
     },
+    wip: [{
+      type: 'image',
+      src: '/works/revolution-br/ShadowLogo.jpg',
+    }, {
+      type: 'image',
+      src: '/works/revolution-br/NoSignal.jpg',
+    }],
   },
   {
     id: 'test4',
