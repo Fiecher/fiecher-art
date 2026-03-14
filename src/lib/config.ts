@@ -72,14 +72,21 @@ export const WORKS: Work[] = [
     }],
   },
   {
-    id: 'test1',
-    title: 'test1',
-    year: 2024,
+    id: 'insomnia-logo',
+    title: 'Insomnia Creative Logo',
+    year: 2023,
     main: {
       type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test1/Preview.jpg',
+      src: '/works/insomnia-logo/Insomnia.mp4',
+      poster: '/works/insomnia-logo/Preview.jpg',
     },
+    wip: [{
+      type: 'image',
+      src: '/works/insomnia-logo/color-variants.jpg',
+    }, {
+      type: 'image',
+      src: '/works/insomnia-logo/versions.jpg',
+    }],
   },
   {
     id: 'test2',
