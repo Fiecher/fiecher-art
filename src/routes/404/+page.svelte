@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <title>404 — Fiecher</title>
+  <title>Fiecher | 404</title>
 </svelte:head>
 
 <div class='shell'>
@@ -61,7 +61,8 @@
     font-weight: 400;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--color-accent);
+    color: var(--color-secondary);
+    opacity: 0.4;
     margin: 0;
   }
 
@@ -105,7 +106,6 @@
 
   .back:hover {
     opacity: 1;
-    color: var(--color-accent);
-    border-bottom-color: var(--color-accent);
+    border-bottom-color: rgba(223, 225, 215, 0.6);
   }
 </style>
