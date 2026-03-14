@@ -72,6 +72,16 @@ export const WORKS: Work[] = [
     }],
   },
   {
+    id: 'soft-studio',
+    title: 'Soft Studio Promo',
+    year: 2023,
+    main: {
+      type: 'video',
+      src: '/works/soft-studio/SoftStudio.mp4',
+      poster: '/works/soft-studio/Preview.jpg',
+    },
+  },
+  {
     id: 'insomnia-logo',
     title: 'Insomnia Creative Logo',
     year: 2023,
@@ -89,14 +99,18 @@ export const WORKS: Work[] = [
     }],
   },
   {
-    id: 'test2',
-    title: 'test2',
-    year: 2024,
+    id: 'nosweat-logo',
+    title: 'No Sweat Logo',
+    year: 2021,
     main: {
       type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test2/Preview.jpg',
+      src: '/works/nosweat-logo/NoSweat.mp4',
+      poster: '/works/nosweat-logo/Preview.jpg',
     },
+    wip: [{
+      type: 'image',
+      src: '/works/nosweat-logo/color-pallete.png',
+    }],
   },
   {
     id: 'test3',
