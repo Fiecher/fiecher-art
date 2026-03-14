@@ -1,4 +1,9 @@
+import { base } from '$app/paths'
 import type { Work } from '$lib/types'
+
+export function withBase(path: string): string {
+  return `${base}${path}`
+}
 
 export const APP_CONFIG = {
   name: 'fiecher-art',

@@ -2,18 +2,18 @@
   interface Props { onDone: () => void }
   const { onDone }: Props = $props()
 
-  import { assets } from '$app/paths'
-  import { WORKS } from '$lib/config'
+  import { withBase, WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
   const IMAGE_URLS = [
-    `${assets}/textures/paper.jpg`,
+    withBase('/textures/paper.jpg'),
     ...WORKS
       .map(w => w.main.poster ?? w.main.src)
-      .filter((src, i, arr) => arr.indexOf(src) === i),
+      .filter((src, i, arr) => arr.indexOf(src) === i)
+      .map(withBase),
   ]
 
-  const REEL_URL = `${assets}/reel/reel.mp4`
+  const REEL_URL = withBase('/reel/reel.mp4')
 
   let progress = $state(0)
 
