@@ -17,11 +17,11 @@
   out:fade={{ duration: 150 }}
 >
   {#each CREDITS as { role, name, href }}
-    <span class='credits-role'>{role}</span>
+    <span class='credits-role' aria-hidden={role === '' ? 'true' : undefined}>{role}</span>
     {#if href}
-      <a class='credits-name credits-link' {href} target='_blank' rel='noopener noreferrer'>
+      <a class='credits-name credits-link' {href} target='_blank' rel='noopener noreferrer' aria-label='{name}, opens in new tab'>
         {name}
-        <svg class='credits-arrow' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg'>
+        <svg class='credits-arrow' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'>
           <line x1='1' y1='9' x2='9' y2='1' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
           <polyline points='3,1 9,1 9,7' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' />
         </svg>

@@ -56,6 +56,8 @@
         class='menu-overlay-btn'
         onclick={() => (isDropdownOpen = true)}
         aria-label='Open menu'
+        aria-expanded='false'
+        aria-haspopup='true'
         type='button'
       ></button>
     {/if}
@@ -93,7 +95,9 @@
       <button
         class='menu-arrow-btn'
         onclick={() => (isDropdownOpen = !isDropdownOpen)}
-        aria-label='Close menu'
+        aria-label={isDropdownOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={isDropdownOpen}
+        aria-haspopup='true'
         type='button'
         tabindex={isDropdownOpen ? 0 : -1}
       >

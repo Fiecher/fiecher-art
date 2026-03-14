@@ -105,7 +105,6 @@
   onmouseenter={showControls}
   ontouchstart={showControls}
 >
-  <!-- svelte-ignore a11y_media_has_caption -->
   <video
     bind:this={videoEl}
     class='reel-video'
@@ -151,10 +150,10 @@
       >
         <span class='ctrl-btn__frame'>
           <svg class='ctrl-btn__icon' viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-            <path d='M8 3H5a2 2 0 0 0-2 2v3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M21 8V5a2 2 0 0 0-2-2h-3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M3 16v3a2 2 0 0 0 2 2h3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M16 21h3a2 2 0 0 0 2-2v-3' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+            <path d='M4 9V5h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+            <path d='M20 9V5h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+            <path d='M4 15v4h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+            <path d='M20 15v4h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
           </svg>
         </span>
       </button>

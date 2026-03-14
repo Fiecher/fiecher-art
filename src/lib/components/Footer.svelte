@@ -4,7 +4,7 @@
   const { onContactOpen }: { onContactOpen: () => void } = $props()
 </script>
 
-<button class='footer-block' onclick={onContactOpen} type='button'>
+<button class='footer-block' onclick={onContactOpen} type='button' aria-label='Open contact info'>
   <span class='footer-line'>
     <span class='footer-large'>Insomnia Creative</span>
     <span class='footer-small'>presents</span>

@@ -208,7 +208,8 @@
       <div
         class='film-cell'
         role='button'
-        tabindex='0'
+        tabindex={i < cells.length ? 0 : -1}
+        aria-hidden={i >= cells.length ? 'true' : undefined}
         onclick={() => triggerFlash(i, cell.id)}
         onkeydown={e => e.key === 'Enter' && triggerFlash(i, cell.id)}
         onmouseenter={() => triggerSheen(i)}

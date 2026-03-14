@@ -42,6 +42,8 @@
   })
 
   let _opening = false
+  let _openerEl = $state<HTMLElement | null>(null)
+  let ejectBtnEl = $state<HTMLButtonElement | null>(null)
 
   async function doOpen() {
     clearTids()
@@ -50,6 +52,8 @@
     videoSrc = null
     beamVisible = false
     beamOpacity = 0
+
+    _openerEl = document.activeElement as HTMLElement | null
 
     if (displayWork?.main.type === 'video')
       videoSrc = withBase(displayWork.main.src)
@@ -65,6 +69,8 @@
     beamOpacity = 1
 
     phase = 'visible'
+    await wait(20)
+    ejectBtnEl?.focus()
   }
 
   async function doClose() {
@@ -82,6 +88,8 @@
     phase = 'idle'
     screenOut = false
     videoSrc = null
+    _openerEl?.focus()
+    _openerEl = null
   }
 
   $effect(() => {
@@ -97,8 +105,35 @@
   })
 
   function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape')
+    if (e.key === 'Escape') {
       closeModal()
+      return
+    }
+    if (e.key === 'Tab' && phase === 'visible') {
+      const dialog = document.querySelector('[role="dialog"]') as HTMLElement | null
+      if (!dialog)
+        return
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(el => !el.hasAttribute('disabled'))
+      if (focusable.length === 0)
+        return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
   }
 
   let mediaAspect = $state<number | null>(null)
@@ -160,7 +195,9 @@
       class='screen-wrap'
       class:screen-wrap--in={screenIn}
       class:screen-wrap--out={screenOut}
-      role='presentation'
+      role='dialog'
+      aria-modal='true'
+      aria-label={displayWork?.title ?? 'Work preview'}
       onclick={e => e.stopPropagation()}
       onkeydown={e => e.stopPropagation()}
     >
@@ -171,6 +208,7 @@
       <div class='corner corner--br' aria-hidden='true'></div>
 
       <button
+        bind:this={ejectBtnEl}
         class='eject-btn'
         onclick={e => {
           e.stopPropagation()
