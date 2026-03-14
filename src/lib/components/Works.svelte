@@ -1,6 +1,6 @@
 <script lang='ts'>
   import FilmReel from '$lib/components/FilmReel.svelte'
-  import { WORK_PAGE_COUNT, WORKS } from '$lib/config'
+  import { withBase, WORK_PAGE_COUNT, WORKS } from '$lib/config'
   import { navigate, updateWorksPage, worksPage } from '$lib/navigation'
   import { openModal } from '$lib/viewer'
   import { onMount } from 'svelte'
@@ -27,7 +27,7 @@
       for (let m = 0; m < CELLS_PER_STRIP; m++) {
         const idx = (startOffset + s * CELLS_PER_STRIP + m) % total
         const w = WORKS[idx]
-        out.push({ id: w.id, title: w.title, image: w.main.poster ?? w.main.src })
+        out.push({ id: w.id, title: w.title, image: withBase(w.main.poster ?? w.main.src) })
       }
     }
     return out

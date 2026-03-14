@@ -1,4 +1,5 @@
 <script lang='ts'>
+  import { withBase } from '$lib/config'
   import { closeModal, modalCell } from '$lib/viewer'
   import { fade } from 'svelte/transition'
   import type { WorkMedia } from '$lib/types'
@@ -51,7 +52,7 @@
     beamOpacity = 0
 
     if (displayWork?.main.type === 'video')
-      videoSrc = displayWork.main.src
+      videoSrc = withBase(displayWork.main.src)
 
     phase = 'opening'
 
@@ -117,7 +118,7 @@
       img.onload = () => {
         mediaAspect = img.naturalWidth / img.naturalHeight
       }
-      img.src = media.src
+      img.src = withBase(media.src)
     }
   })
 
@@ -195,7 +196,7 @@
             <video
               bind:this={videoEl}
               src={videoSrc ?? undefined}
-              poster={media.poster}
+              poster={media.poster ? withBase(media.poster) : undefined}
               onloadedmetadata={onVideoMeta}
               controls
               loop
@@ -210,7 +211,7 @@
 
         {#if media?.type === 'image'}
           <div class='media-layer'>
-            <img src={media.src} alt={displayWork?.title ?? ''} class='media-img' draggable='false' />
+            <img src={withBase(media.src)} alt={displayWork?.title ?? ''} class='media-img' draggable='false' />
           </div>
         {/if}
 
