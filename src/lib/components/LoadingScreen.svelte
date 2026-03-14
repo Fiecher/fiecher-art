@@ -2,18 +2,18 @@
   interface Props { onDone: () => void }
   const { onDone }: Props = $props()
 
-  import { base } from '$app/paths'
+  import { assets } from '$app/paths'
   import { WORKS } from '$lib/config'
   import { onMount, tick } from 'svelte'
 
   const IMAGE_URLS = [
-    `${base}/textures/paper.jpg`,
+    `${assets}/textures/paper.jpg`,
     ...WORKS
       .map(w => w.main.poster ?? w.main.src)
       .filter((src, i, arr) => arr.indexOf(src) === i),
   ]
 
-  const REEL_URL = `${base}/reel/reel.mp4`
+  const REEL_URL = `${assets}/reel/reel.mp4`
 
   let progress = $state(0)
 
@@ -78,7 +78,7 @@
       assetsOk = true
     } else {
       Promise.all(
-        IMAGE_URLS.map((src, i) =>
+        IMAGE_URLS.map((src) =>
           new Promise<void>(resolve => {
             const img = new Image()
             const timer = window.setTimeout(resolve, 10_000)
@@ -105,16 +105,24 @@
     }
 
     const vid = document.createElement('video')
-    vid.src = REEL_URL
     vid.muted = true
     vid.preload = 'auto'
+
+    function destroyVid() {
+      vid.pause()
+      vid.removeAttribute('src')
+      vid.load()
+    }
+
     const videoTimer = window.setTimeout(() => {
+      destroyVid()
       videoOk = true
       check()
     }, 8_000)
 
     vid.addEventListener('canplaythrough', () => {
       clearTimeout(videoTimer)
+      destroyVid()
       videoOk = true
       setProgress(0.85)
       check()
@@ -122,10 +130,12 @@
 
     vid.addEventListener('error', () => {
       clearTimeout(videoTimer)
+      destroyVid()
       videoOk = true
       check()
     }, { once: true })
 
+    vid.src = REEL_URL
     vid.load()
 
     requestAnimationFrame(() =>
@@ -135,7 +145,6 @@
       }),
     )
 
-    // 5. Full page load
     function onPageReady() {
       pageOk = true
       setProgress(0.9)
