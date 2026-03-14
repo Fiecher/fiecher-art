@@ -56,13 +56,20 @@ export const WORKS: Work[] = [
   },
   {
     id: 'symptom-bulletin',
-    title: 'Symptom The Bulletin',
-    year: 2024,
+    title: 'The Bulletin',
+    year: 2025,
     main: {
       type: 'video',
       src: '/works/symptom-bulletin/TheBulletin.mp4',
       poster: '/works/symptom-bulletin/Preview.png',
     },
+    wip: [{
+      type: 'image',
+      src: '/works/symptom-bulletin/model-render.jpg',
+    }, {
+      type: 'image',
+      src: '/works/symptom-bulletin/model-viewport.jpg',
+    }],
   },
   {
     id: 'test1',
