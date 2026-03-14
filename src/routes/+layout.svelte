@@ -26,26 +26,36 @@
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
 
-  let programmaticScroll = false
-  let programmaticTimer = 0
+  let _initialScrollDone = false
+  let _programmaticScroll = false
+  let _programmaticTimer = 0
 
-  function syncScrollbar(progress: number) {
+  function syncScrollbar(progress: number, instant = false) {
     if (!scrollEl)
       return
     const target = Math.round(progress * TOTAL_STEPS) * STEP_PX
     if (Math.abs(scrollEl.scrollTop - target) < 2)
       return
-    programmaticScroll = true
-    clearTimeout(programmaticTimer)
-    programmaticTimer = window.setTimeout(() => {
-      programmaticScroll = false
+
+    _programmaticScroll = true
+    clearTimeout(_programmaticTimer)
+    _programmaticTimer = window.setTimeout(() => {
+      _programmaticScroll = false
     }, 700)
-    scrollEl.scrollTo({ top: target, behavior: 'smooth' })
+
+    scrollEl.scrollTo({ top: target, behavior: instant ? 'instant' : 'smooth' })
   }
 
   $effect(() => {
     const progress = $globalProgress
     void $worksPage
+
+    if (!_initialScrollDone) {
+      _initialScrollDone = true
+      requestAnimationFrame(() => syncScrollbar(progress, true))
+      return
+    }
+
     syncScrollbar(progress)
   })
 
@@ -63,9 +73,12 @@
   })
 
   function onScrollEnd() {
-    if (!scrollEl || programmaticScroll || get(modalCell) || get(isVideoFullscreen))
+    if (_programmaticScroll)
       return
-    const step = Math.round(scrollEl.scrollTop / STEP_PX)
+    if (get(modalCell) || get(isVideoFullscreen))
+      return
+
+    const step = Math.round(scrollEl!.scrollTop / STEP_PX)
     const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
     const { section, pageIndex } = progressToTarget(clamped / TOTAL_STEPS)
     goToSection(section, pageIndex ?? null)
@@ -117,10 +130,10 @@
       return
     const dx = touch.x - e.changedTouches[0].clientX
     const dy = touch.y - e.changedTouches[0].clientY
-    const adx = Math.abs(dx)
-    const ady = Math.abs(dy)
-    if (ady >= adx && ady >= SWIPE_MIN_PX)
-      tryNavigate(dy > 0 ? 1 : -1)
+    if (Math.abs(dy) >= Math.abs(dx) && Math.abs(dy) >= SWIPE_MIN_PX) {
+      const dir = dy > 0 ? 1 : -1
+      requestAnimationFrame(() => tryNavigate(dir))
+    }
   }
 </script>
 

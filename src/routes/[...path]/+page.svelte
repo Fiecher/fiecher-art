@@ -16,7 +16,7 @@
     unsubscribe?.()
   })
 
-  const isInfo = $derived($activeSection === 'INFO')
+  const isInfo = $derived($activeSection === 'CONTACT')
   const isWorks = $derived($activeSection === 'WORKS')
   const isReel = $derived($activeSection === 'REEL')
 
@@ -24,7 +24,7 @@
   let worksEntryDelay = $state(0)
 
   $effect(() => {
-    if ($activeSection === 'WORKS' && prevSection === 'INFO') {
+    if ($activeSection === 'WORKS' && prevSection === 'CONTACT') {
       worksEntryDelay = 150
     } else if ($activeSection !== 'WORKS') {
       worksEntryDelay = 0
@@ -97,7 +97,7 @@
         <Info />
       {:else}
         <div in:fade={{ duration: 200 }}>
-          <Footer onContactOpen={() => goToSection('INFO')} />
+          <Footer onContactOpen={() => goToSection('CONTACT')} />
         </div>
       {/if}
     </div>
