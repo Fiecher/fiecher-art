@@ -77,6 +77,11 @@
     if (total === 0) {
       assetsOk = true
     } else {
+      const cache = document.createElement('div')
+      cache.setAttribute('aria-hidden', 'true')
+      cache.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;left:-9999px;top:-9999px'
+      document.body.appendChild(cache)
+
       Promise.all(
         IMAGE_URLS.map((src) =>
           new Promise<void>(resolve => {
@@ -85,6 +90,7 @@
             img.onload = () => {
               img.decode?.().catch(() => {}).finally(() => {
                 clearTimeout(timer)
+                cache.appendChild(img)
                 loaded++
                 setProgress(0.1 + (loaded / total) * 0.3)
                 resolve()
