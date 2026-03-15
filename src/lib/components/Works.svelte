@@ -283,7 +283,7 @@
     bind:this={stageEl}
     onmousedown={onMouseDown}
   >
-    <div class='strip-slot' style={`height:${slotH}px; top:0`}>
+    <div class='strip-slot strip-slot--top' style={`--slot-h:${slotH}px`}>
       <FilmReel
         bind:this={reelTop}
         cells={topCells}
@@ -297,7 +297,7 @@
         {visible}
       />
     </div>
-    <div class='strip-slot' style={`height:${slotH}px; top:${slotH + stripGap}px`}>
+    <div class='strip-slot strip-slot--bot' style={`--slot-h:${slotH}px; --slot-top:${slotH + stripGap}px`}>
       <FilmReel
         bind:this={reelBot}
         cells={botCells}
@@ -364,7 +364,17 @@
   .strip-slot {
     position: absolute;
     left: 0; right: 0;
+    height: var(--slot-h);
     overflow: visible;
+  }
+
+  .strip-slot--top {
+    top: 0;
+  }
+
+  .strip-slot--bot {
+    top: 0;
+    transform: translateY(var(--slot-top));
   }
 
   .dot-nav {
