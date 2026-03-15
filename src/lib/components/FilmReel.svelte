@@ -49,6 +49,31 @@
     return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
   }
 
+  function startRaf() {
+    if (rafId)
+      return
+    function tick(now: number) {
+      if (animating && visible) {
+        const t = Math.min((now - animStart) / animDur, 1)
+        const e = ease(t)
+        offsetCells = normalizeCells(
+          animFromCells + (animTargetCells - animFromCells) * e,
+        )
+        if (t >= 1) {
+          animating = false
+          offsetCells = animTargetCells
+          rafId = 0
+          return
+        }
+      } else if (!dragging) {
+        rafId = 0
+        return
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+  }
+
   export function scrollBy(px: number, duration = 700) {
     if (cellSize <= 0)
       return
@@ -58,6 +83,7 @@
     animStart = performance.now()
     animDur = duration
     animating = true
+    startRaf()
   }
 
   export function getDragDeltaCells(): number {
@@ -71,6 +97,7 @@
     animStart = performance.now()
     animDur = duration
     animating = true
+    startRaf()
   }
 
   export function onDragStart(clientX: number) {
@@ -83,6 +110,7 @@
     dragVelX = 0
     dragLastX = clientX
     dragLastT = performance.now()
+    startRaf()
   }
 
   export function onDragMove(clientX: number) {
@@ -167,23 +195,6 @@
   onMount(() => {
     offsetCells = normalizeCells(-segmentLen)
     _mounted = true
-
-    function tick(now: number) {
-      if (animating && visible) {
-        const t = Math.min((now - animStart) / animDur, 1)
-        const e = ease(t)
-        offsetCells = normalizeCells(
-          animFromCells + (animTargetCells - animFromCells) * e,
-        )
-        if (t >= 1) {
-          animating = false
-          offsetCells = animTargetCells
-        }
-      }
-      rafId = requestAnimationFrame(tick)
-    }
-
-    rafId = requestAnimationFrame(tick)
   })
 
   onDestroy(() => {
@@ -206,6 +217,7 @@
   const holeCount = $derived(Math.max(3, Math.floor(cellSize / (holeW + holeGap))))
   const holeGapActual = $derived((cellSize - holeCount * holeW) / holeCount)
   const holePadding = $derived(holeGapActual / 2)
+  const isActive = $derived(animating || dragging || isEntering)
   const sheenEls = $state<(HTMLElement | null)[]>([])
   let pressedIdx = $state<number | null>(null)
 
@@ -237,6 +249,7 @@
   class='film-strip'
   class:film-strip--entering={isEntering}
   class:film-strip--dragging={dragging}
+  class:film-strip--active={isActive}
   style={`
     --tilt:    ${tilt}deg;
     --slide-x: ${slideX}px;
@@ -244,7 +257,7 @@
     opacity:   ${slideOpa};
   `}
 >
-  <div class='strip-track' style={`transform:translateX(${offset}px)`}>
+  <div class='strip-track' class:strip-track--active={isActive} style={`transform:translateX(${offset}px)`}>
     {#each loopCells as cell, i (cell.id + i)}
       <div
         class='film-cell'
@@ -279,7 +292,7 @@
                   src={cell.image}
                   alt=''
                   draggable='false'
-                  loading='eager'
+                  loading={i < cells.length ? 'eager' : 'lazy'}
                   decoding='async'
                   style={`border-radius:${frameR}px`}
                 />
@@ -324,6 +337,10 @@
     isolation: isolate;
   }
 
+  .film-strip--active {
+    will-change: transform, opacity;
+  }
+
   .film-strip--entering {
     transition: none;
   }
@@ -337,6 +354,9 @@
     display: flex;
     flex-direction: row;
     height: 100%;
+  }
+
+  .strip-track--active {
     will-change: transform;
   }
 

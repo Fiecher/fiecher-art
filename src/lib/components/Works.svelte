@@ -355,10 +355,12 @@
     inset: 0;
     z-index: 15;
     pointer-events: none;
+    background-image: url('/textures/paper.jpg');
     background-size: 180px 180px;
     filter: contrast(160%) brightness(320%);
     mix-blend-mode: multiply;
     opacity: 0.32;
+    will-change: transform;
   }
 
   .strips-stage {
