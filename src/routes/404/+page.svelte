@@ -1,5 +1,10 @@
 <script lang='ts'>
   import { base } from '$app/paths'
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    window.dispatchEvent(new CustomEvent('works:ready'))
+  })
 </script>
 
 <svelte:head>

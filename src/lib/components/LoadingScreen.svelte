@@ -169,6 +169,13 @@
       check()
     }, { once: true })
 
+    setTimeout(() => {
+      if (!worksOk) {
+        worksOk = true
+        check()
+      }
+    }, 500)
+
     setTimeout(() => finish(), 15_000)
   })
 </script>

@@ -2,7 +2,6 @@
   import { base } from '$app/paths'
   import { isVideoFullscreen } from '$lib/viewer'
   import { onMount } from 'svelte'
-  import { fade } from 'svelte/transition'
 
   interface Props {
     ready?: boolean
@@ -98,6 +97,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class='reel-container'
+  class:reel-container--dimmed={dimmed}
   onmousemove={showControls}
   onmouseenter={showControls}
   ontouchstart={showControls}
@@ -105,7 +105,6 @@
   <video
     bind:this={videoEl}
     class='reel-video'
-    class:reel-video--dimmed={dimmed}
     src='{base}/reel/reel.mp4'
     {muted}
     loop
@@ -115,48 +114,48 @@
     aria-label='Reel showreel video'
   ></video>
 
-  {#if controlsVisible && !dimmed}
-    <div class='reel-controls' transition:fade={{ duration: 200 }}>
+  <div class='reel-controls' class:reel-controls--visible={controlsVisible && !dimmed}>
 
-      <button
-        class='ctrl-btn'
-        onclick={toggleMute}
-        aria-label={muted ? 'Unmute' : 'Mute'}
-        type='button'
-      >
-        <span class='ctrl-btn__frame'>
-          <svg class='ctrl-btn__icon' viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-            {#if muted}
-              <path d='M11 5L6 9H2v6h4l5 4V5z' stroke='currentColor' stroke-width='1.5' stroke-linejoin='round' />
-              <line x1='23' y1='9' x2='17' y2='15' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-              <line x1='17' y1='9' x2='23' y2='15' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-            {:else}
-              <path d='M11 5L6 9H2v6h4l5 4V5z' stroke='currentColor' stroke-width='1.5' stroke-linejoin='round' />
-              <path d='M15.54 8.46a5 5 0 0 1 0 7.07' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-              <path d='M19.07 4.93a10 10 0 0 1 0 14.14' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-            {/if}
-          </svg>
-        </span>
-      </button>
+    <button
+      class='ctrl-btn'
+      onclick={toggleMute}
+      aria-label={muted ? 'Unmute' : 'Mute'}
+      type='button'
+      tabindex={controlsVisible && !dimmed ? 0 : -1}
+    >
+      <span class='ctrl-btn__frame'>
+        <svg class='ctrl-btn__icon' viewBox='0 0 24 24' fill='none' aria-hidden='true'>
+          {#if muted}
+            <path d='M11 5L6 9H2v6h4l5 4V5z' stroke='currentColor' stroke-width='1.5' stroke-linejoin='round' />
+            <line x1='23' y1='9' x2='17' y2='15' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
+            <line x1='17' y1='9' x2='23' y2='15' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
+          {:else}
+            <path d='M11 5L6 9H2v6h4l5 4V5z' stroke='currentColor' stroke-width='1.5' stroke-linejoin='round' />
+            <path d='M15.54 8.46a5 5 0 0 1 0 7.07' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
+            <path d='M19.07 4.93a10 10 0 0 1 0 14.14' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
+          {/if}
+        </svg>
+      </span>
+    </button>
 
-      <button
-        class='ctrl-btn'
-        onclick={openFullscreen}
-        aria-label='Open fullscreen'
-        type='button'
-      >
-        <span class='ctrl-btn__frame'>
-          <svg class='ctrl-btn__icon' viewBox='0 0 24 24' fill='none' aria-hidden='true'>
-            <path d='M4 9V5h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M20 9V5h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M4 15v4h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-            <path d='M20 15v4h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
-          </svg>
-        </span>
-      </button>
+    <button
+      class='ctrl-btn'
+      onclick={openFullscreen}
+      aria-label='Open fullscreen'
+      type='button'
+      tabindex={controlsVisible && !dimmed ? 0 : -1}
+    >
+      <span class='ctrl-btn__frame'>
+        <svg class='ctrl-btn__icon' viewBox='0 0 24 24' fill='none' aria-hidden='true'>
+          <path d='M4 9V5h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+          <path d='M20 9V5h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+          <path d='M4 15v4h4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+          <path d='M20 15v4h-4' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' />
+        </svg>
+      </span>
+    </button>
 
-    </div>
-  {/if}
+  </div>
 </div>
 
 <style>
@@ -171,6 +170,22 @@
     align-items: center;
   }
 
+  .reel-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: var(--color-primary);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
+  }
+
+  .reel-container--dimmed::after {
+    opacity: 0.7;
+  }
+
   .reel-video {
     width: 100%;
     height: 100%;
@@ -179,11 +194,6 @@
     display: block;
     position: relative;
     z-index: 1;
-    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .reel-video--dimmed {
-    opacity: 0.3;
   }
 
   .reel-controls {
@@ -195,6 +205,14 @@
     align-items: center;
     gap: 8px;
     z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    will-change: opacity;
+  }
+
+  .reel-controls--visible {
+    opacity: 1;
     pointer-events: all;
   }
 
