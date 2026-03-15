@@ -349,20 +349,6 @@
     background: rgba(223, 225, 215, 0.12);
   }
 
-  .works::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 15;
-    pointer-events: none;
-    background-image: url('/textures/paper.jpg');
-    background-size: 180px 180px;
-    filter: contrast(160%) brightness(320%);
-    mix-blend-mode: multiply;
-    opacity: 0.32;
-    will-change: transform;
-  }
-
   .strips-stage {
     position: absolute;
     inset: 0;
