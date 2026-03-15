@@ -169,7 +169,7 @@
     _mounted = true
 
     function tick(now: number) {
-      if (animating) {
+      if (animating && visible) {
         const t = Math.min((now - animStart) / animDur, 1)
         const e = ease(t)
         offsetCells = normalizeCells(
@@ -180,27 +180,10 @@
           offsetCells = animTargetCells
         }
       }
-      if (visible) {
-        rafId = requestAnimationFrame(tick)
-      } else {
-        rafId = 0
-      }
-    }
-
-    function startRaf() {
-      if (rafId === 0) {
-        rafId = requestAnimationFrame(tick)
-      }
-    }
-
-    $effect(() => {
-      if (visible)
-        startRaf()
-    })
-
-    if (visible) {
       rafId = requestAnimationFrame(tick)
     }
+
+    rafId = requestAnimationFrame(tick)
   })
 
   onDestroy(() => {

@@ -3,7 +3,7 @@
   import { withBase, WORK_PAGE_COUNT, WORKS } from '$lib/config'
   import { navigate, updateWorksPage, worksPage } from '$lib/navigation'
   import { openModal } from '$lib/viewer'
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import { get } from 'svelte/store'
 
   interface Props {
@@ -255,7 +255,11 @@
 
     mounted = true
 
-    window.dispatchEvent(new CustomEvent('works:ready'))
+    tick().then(() => tick()).then(() => {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('works:ready'))
+      })
+    })
 
     return () => {
       ro.disconnect()

@@ -33,7 +33,6 @@
   })
 
   let reelReady = $state(false)
-  let reelComponent = $state<ReturnType<typeof Reel> | null>(null)
 
   onMount(() => {
     const handler = () => {
@@ -41,17 +40,6 @@
     }
     window.addEventListener('app:loaded', handler, { once: true })
     return () => window.removeEventListener('app:loaded', handler)
-  })
-
-  $effect(() => {
-    const section = $activeSection
-    if (!reelComponent)
-      return
-    if (section === 'REEL') {
-      reelComponent.play()
-    } else {
-      reelComponent.pause()
-    }
   })
 </script>
 
@@ -73,8 +61,8 @@
             aria-hidden={isInfo}
           >
             <Reel
-              bind:this={reelComponent}
               ready={reelReady}
+              playing={isReel}
               dimmed={!isReel}
             />
           </section>
@@ -172,9 +160,10 @@
     inset: 0;
     z-index: 2;
     pointer-events: auto;
+    contain: layout style;
   }
   .workspace-section--invisible {
-    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
   }
   .footer-wrapper {

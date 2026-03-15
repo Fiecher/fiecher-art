@@ -193,7 +193,7 @@
     <circle cx='100' cy='100' r='10' class='reel-center' />
   </svg>
   <div class='bar'>
-    <div class='bar-fill' style={`width:${progress * 100}%`}></div>
+    <div class='bar-fill' style={`transform: scaleX(${progress})`}></div>
   </div>
 </div>
 
@@ -231,13 +231,16 @@
 }
 .bar-fill {
   height: 100%;
+  width: 100%;
   background: linear-gradient(
     90deg,
     rgba(223,225,215,0.25),
     var(--color-secondary),
     rgba(223,225,215,0.25)
   );
-  transition: width 0.25s ease;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
   box-shadow: 0 0 8px rgba(223,225,215,0.25);
 }
 </style>

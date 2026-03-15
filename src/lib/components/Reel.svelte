@@ -6,9 +6,10 @@
 
   interface Props {
     ready?: boolean
+    playing?: boolean
     dimmed?: boolean
   }
-  const { ready = false, dimmed = false }: Props = $props()
+  const { ready = false, playing = false, dimmed = false }: Props = $props()
 
   let videoEl = $state<HTMLVideoElement | null>(null)
   let muted = $state(true)
@@ -18,17 +19,13 @@
 
   $effect(() => {
     if (ready && videoEl) {
-      videoEl.play().catch(() => {})
+      if (playing) {
+        videoEl.play().catch(() => {})
+      } else {
+        videoEl.pause()
+      }
     }
   })
-
-  export function pause() {
-    videoEl?.pause()
-  }
-
-  export function play() {
-    videoEl?.play().catch(() => {})
-  }
 
   function toggleMute() {
     if (!videoEl)
