@@ -329,12 +329,14 @@
     transform: translateX(-50%);
     pointer-events: none;
     z-index: 0;
-    width: 0;
-    height: 0;
-    border-left:  90px solid transparent;
-    border-right: 90px solid transparent;
-    border-top: 52vh solid rgba(223, 225, 215, 0.02);
-    filter: blur(24px);
+    width: 60vw;
+    height: 55vh;
+    background: radial-gradient(
+      ellipse 50% 100% at 50% 0%,
+      rgba(223, 225, 215, 0.055) 0%,
+      rgba(223, 225, 215, 0.018) 40%,
+      transparent 100%
+    );
     transition: opacity 0.7s ease;
   }
 

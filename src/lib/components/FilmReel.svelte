@@ -334,7 +334,6 @@
     overflow: hidden;
     cursor: grab;
     transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
-    isolation: isolate;
   }
 
   .film-strip--active {
@@ -348,6 +347,7 @@
   .film-strip--dragging {
     cursor: grabbing;
     user-select: none;
+    transition: none;
   }
 
   .strip-track {
@@ -397,23 +397,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 0 12px rgba(0,0,0,0.35);
-  }
-
-  .cell-frame::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 3;
-    background-image:
-      radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px),
-      radial-gradient(circle, rgba(11,10,9,0.5) 1px, transparent 1px);
-    background-size: 5px 5px;
-    background-position: 0 0, 2.5px 2.5px;
-    mix-blend-mode: multiply;
-    opacity: 1;
-    border-radius: inherit;
   }
 
   .img-wrap {

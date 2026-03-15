@@ -172,11 +172,6 @@
     border: none;
     cursor: pointer;
     white-space: nowrap;
-    filter:
-      drop-shadow(0 0 0.4px rgba(223, 225, 215, 0.55))
-      drop-shadow(0.5px 0 0.3px rgba(223, 225, 215, 0.35))
-      drop-shadow(-0.5px 0 0.3px rgba(223, 225, 215, 0.35))
-      drop-shadow(0 0.5px 0.3px rgba(223, 225, 215, 0.30));
     text-shadow:
       1px 1px 0 rgba(0, 0, 0, 0.6),
       0px 2px 4px rgba(0, 0, 0, 0.28);
