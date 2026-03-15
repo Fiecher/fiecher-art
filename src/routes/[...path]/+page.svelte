@@ -79,15 +79,13 @@
             />
           </section>
 
-          {#if isWorks}
-            <section
-              class='workspace-section workspace-section--overlay'
-              in:fade={{ duration: 250, delay: 50 }}
-              out:fade={{ duration: 200 }}
-            >
-              <Works entryDelay={worksEntryDelay} overlay={true} />
-            </section>
-          {/if}
+          <section
+            class='workspace-section workspace-section--overlay'
+            class:workspace-section--invisible={!isWorks}
+            aria-hidden={!isWorks}
+          >
+            <Works entryDelay={worksEntryDelay} overlay={true} visible={isWorks} />
+          </section>
 
         </main>
       </div>
@@ -173,6 +171,11 @@
     position: absolute;
     inset: 0;
     z-index: 2;
+    pointer-events: auto;
+  }
+  .workspace-section--invisible {
+    opacity: 0;
+    pointer-events: none;
   }
   .footer-wrapper {
     flex-shrink: 0;

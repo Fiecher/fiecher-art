@@ -189,20 +189,21 @@
     bottom: 2px;
     height: 0.25rem;
     background-color: var(--color-secondary);
-    transition: width 0.15s ease-in-out;
-    width: 0;
+    width: 50%;
+    transform: scaleX(0);
+    transition: transform 0.15s ease-in-out;
   }
 
   .menu-text::before { right: 50%; transform-origin: right bottom; }
   .menu-text::after  { left: 50%;  transform-origin: left bottom; }
 
   .menu-text:hover::before, .menu-text:hover::after,
-  .menu-text--active::before, .menu-text--active::after { width: 50%; }
+  .menu-text--active::before, .menu-text--active::after { transform: scaleX(1); }
 
   .menu-text:hover { transform: scale(1.05); }
 
   .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::before,
-  .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { width: 0; }
+  .menu-list:has(.menu-text:not(.menu-text--active):hover) .menu-text--active::after { transform: scaleX(0); }
 
   .menu-collapsed {
     display: none;
@@ -265,22 +266,22 @@
 
   .menu:not(.menu--open) .menu-col-item::before,
   .menu:not(.menu--open) .menu-col-item::after {
-    width: 0 !important;
+    transform: scaleX(0) !important;
   }
 
   .menu--open .menu-col-item.menu-text--active::before,
   .menu--open .menu-col-item.menu-text--active::after {
-    width: 50%;
+    transform: scaleX(1);
   }
 
   .menu--open .menu-col-item:hover::before,
   .menu--open .menu-col-item:hover::after {
-    width: 50%;
+    transform: scaleX(1);
   }
 
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::before,
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::after {
-    width: 0;
+    transform: scaleX(0);
   }
 
   .menu-arrow-wrap {
@@ -320,12 +321,12 @@
   @media (hover: none) {
   .menu-col-item:not(.menu-text--active):hover::before,
   .menu-col-item:not(.menu-text--active):hover::after {
-    width: 0 !important;
+    transform: scaleX(0) !important;
   }
 
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::before,
   .menu--open .menu-col-list:has(.menu-col-item:not(.menu-text--active):hover) .menu-col-item.menu-text--active::after {
-    width: 50% !important;
+    transform: scaleX(1) !important;
   }
 }
 </style>

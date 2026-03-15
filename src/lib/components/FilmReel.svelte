@@ -11,9 +11,10 @@
     initialSection?: number
     cellsPerSection?: number
     onCellClick?: (id: string) => void
+    visible?: boolean
   }
 
-  const { cells, cellSize, tilt = 3, entryX = 0, entryDelay = 0, initialSection = 0, cellsPerSection = 2, onCellClick }: Props = $props()
+  const { cells, cellSize, tilt = 3, entryX = 0, entryDelay = 0, initialSection = 0, cellsPerSection = 2, onCellClick, visible = true }: Props = $props()
 
   const loopCells = $derived([...cells, ...cells, ...cells])
   const segmentLen = $derived(cells.length)
@@ -109,28 +110,63 @@
       0 :
         entryX + Math.sign(entryX) * Math.abs(initialSection) * cellsPerSection * cellSize,
   )
-  let slideX = $state(entryXCompensated)
+  let slideX = $state(entryX !== 0 ? 9999 : 0)
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
+  let isEntering = $state(false)
+
+  function easeOvershoot(t: number): number {
+    const s = 0.4
+    return 1 + (s + 1) * (t - 1) ** 3 + s * (t - 1) ** 2
+  }
+
+  function easeOut3(t: number): number {
+    return 1 - (1 - t) ** 3
+  }
+
+  let _entranceRaf = 0
+
+  export function playEntrance(delay = entryDelay) {
+    if (entryX === 0)
+      return
+
+    cancelAnimationFrame(_entranceRaf)
+
+    const run = () => {
+      const startX = Math.sign(entryX) * window.innerWidth * 0.75
+      slideX = startX
+      slideOpa = 0
+      isEntering = true
+
+      const DURATION = 1100
+      const startTime = performance.now()
+
+      const tick = (now: number) => {
+        const t = Math.min((now - startTime) / DURATION, 1)
+        slideX = startX * (1 - easeOvershoot(t))
+        slideOpa = Math.min(1, easeOut3(t * 1.5))
+        if (t < 1) {
+          _entranceRaf = requestAnimationFrame(tick)
+        } else {
+          slideX = 0
+          slideOpa = 1
+          isEntering = false
+        }
+      }
+      _entranceRaf = requestAnimationFrame(tick)
+    }
+
+    if (delay > 0) {
+      window.setTimeout(run, delay)
+    } else {
+      run()
+    }
+  }
+
+  let _mounted = false
 
   onMount(() => {
     offsetCells = normalizeCells(-segmentLen)
-
-    if (entryX !== 0) {
-      slideX = entryXCompensated
-      const triggerEntrance = () => {
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            slideX = 0
-            slideOpa = 1
-          }),
-        )
-      }
-      if (entryDelay > 0) {
-        window.setTimeout(triggerEntrance, entryDelay)
-      } else {
-        triggerEntrance()
-      }
-    }
+    _mounted = true
 
     function tick(now: number) {
       if (animating) {
@@ -144,12 +180,33 @@
           offsetCells = animTargetCells
         }
       }
+      if (visible) {
+        rafId = requestAnimationFrame(tick)
+      } else {
+        rafId = 0
+      }
+    }
+
+    function startRaf() {
+      if (rafId === 0) {
+        rafId = requestAnimationFrame(tick)
+      }
+    }
+
+    $effect(() => {
+      if (visible)
+        startRaf()
+    })
+
+    if (visible) {
       rafId = requestAnimationFrame(tick)
     }
-    rafId = requestAnimationFrame(tick)
   })
 
-  onDestroy(() => cancelAnimationFrame(rafId))
+  onDestroy(() => {
+    cancelAnimationFrame(rafId)
+    cancelAnimationFrame(_entranceRaf)
+  })
 
   const BASE = 220
   const r = $derived(cellSize / BASE)
@@ -195,6 +252,7 @@
 
 <div
   class='film-strip'
+  class:film-strip--entering={isEntering}
   class:film-strip--dragging={dragging}
   style={`
     --tilt:    ${tilt}deg;
@@ -238,7 +296,8 @@
                   src={cell.image}
                   alt=''
                   draggable='false'
-                  loading='lazy'
+                  loading='eager'
+                  decoding='async'
                   style={`border-radius:${frameR}px`}
                 />
               </div>
@@ -278,10 +337,12 @@
     background: var(--color-primary);
     overflow: hidden;
     cursor: grab;
-    transition:
-      transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity   0.6s ease;
+    transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
     isolation: isolate;
+  }
+
+  .film-strip--entering {
+    transition: none;
   }
 
   .film-strip--dragging {

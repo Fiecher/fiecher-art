@@ -43,6 +43,7 @@
     let videoOk = false
     let paintOk = false
     let pageOk = false
+    let worksOk = false
     let finished = false
 
     async function finish() {
@@ -55,7 +56,7 @@
     }
 
     function check() {
-      if (fontsOk && assetsOk && videoOk && paintOk && pageOk)
+      if (fontsOk && assetsOk && videoOk && paintOk && pageOk && worksOk)
         finish()
     }
 
@@ -161,6 +162,12 @@
     } else {
       window.addEventListener('load', onPageReady, { once: true })
     }
+
+    window.addEventListener('works:ready', () => {
+      worksOk = true
+      setProgress(0.95)
+      check()
+    }, { once: true })
 
     setTimeout(() => finish(), 15_000)
   })

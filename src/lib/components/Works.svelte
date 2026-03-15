@@ -9,8 +9,9 @@
   interface Props {
     entryDelay?: number
     overlay?: boolean
+    visible?: boolean
   }
-  const { entryDelay = 0, overlay = false }: Props = $props()
+  const { entryDelay = 0, overlay = false, visible = true }: Props = $props()
 
   const CELLS_PER_STRIP = 2
   const sectionCount = WORK_PAGE_COUNT
@@ -63,7 +64,7 @@
   let reelBot = $state<ReturnType<typeof FilmReel> | null>(null)
   let isAnimating = false
   let pendingSection: number | null = null
-  let mounted = false
+  let mounted = $state(false)
 
   function navigateTo(target: number, direction: 1 | -1 | 0 = 0) {
     const clamped = Math.max(0, Math.min(target, sectionCount - 1))
@@ -224,6 +225,18 @@
     }
   }
 
+  let _prevVisible = false
+  $effect(() => {
+    const v = visible
+    if (!mounted)
+      return
+    if (v && !_prevVisible) {
+      reelTop?.playEntrance(entryDelay)
+      reelBot?.playEntrance(entryDelay)
+    }
+    _prevVisible = v
+  })
+
   onMount(() => {
     updateWorksPage(initialSection)
 
@@ -241,6 +254,8 @@
     }
 
     mounted = true
+
+    window.dispatchEvent(new CustomEvent('works:ready'))
 
     return () => {
       ro.disconnect()
@@ -275,6 +290,7 @@
         {initialSection}
         cellsPerSection={CELLS_PER_STRIP}
         onCellClick={handleCellClick}
+        {visible}
       />
     </div>
     <div class='strip-slot' style={`height:${slotH}px; top:${slotH + stripGap}px`}>
@@ -288,6 +304,7 @@
         initialSection={-initialSection}
         cellsPerSection={CELLS_PER_STRIP}
         onCellClick={handleCellClick}
+        {visible}
       />
     </div>
   </div>
