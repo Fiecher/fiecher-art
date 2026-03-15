@@ -1,6 +1,6 @@
 <script lang='ts'>
+  import Contact from '$lib/components/Contact.svelte'
   import Footer from '$lib/components/Footer.svelte'
-  import Info from '$lib/components/Info.svelte'
   import Menu from '$lib/components/Menu.svelte'
   import Reel from '$lib/components/Reel.svelte'
   import Works from '$lib/components/Works.svelte'
@@ -16,7 +16,7 @@
     unsubscribe?.()
   })
 
-  const isInfo = $derived($activeSection === 'CONTACT')
+  const isContact = $derived($activeSection === 'CONTACT')
   const isWorks = $derived($activeSection === 'WORKS')
   const isReel = $derived($activeSection === 'REEL')
 
@@ -50,7 +50,7 @@
   <div class='stage'>
     <div
       class='workspace-wrapper'
-      class:workspace-wrapper--collapsed={isInfo}
+      class:workspace-wrapper--collapsed={isContact}
     >
       <div class='workspace-frame'>
         <main class='workspace-main'>
@@ -58,7 +58,7 @@
           <section
             class='workspace-section workspace-section--reel'
             class:workspace-section--hidden={!isReel && !isWorks}
-            aria-hidden={isInfo}
+            aria-hidden={isContact}
           >
             <Reel
               ready={reelReady}
@@ -78,9 +78,9 @@
         </main>
       </div>
     </div>
-    <div class='footer-wrapper' class:footer-wrapper--info={isInfo}>
-      {#if isInfo}
-        <Info />
+    <div class='footer-wrapper' class:footer-wrapper--info={isContact}>
+      {#if isContact}
+        <Contact />
       {:else}
         <div in:fade={{ duration: 200 }}>
           <Footer onContactOpen={() => goToSection('CONTACT')} />
@@ -123,7 +123,6 @@
     width: 100%;
     background-color: var(--color-secondary);
     position: relative;
-    isolation: isolate;
   }
   .workspace-main {
     flex: 1;

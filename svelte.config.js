@@ -15,7 +15,7 @@ const config = {
     },
     prerender: {
       handleUnseenRoutes: 'ignore',
-      entries: ['*', '/reel', '/works', '/info'],
+      entries: ['*', '/reel', '/works', '/contact'],
     },
   },
   preprocess: [mdsvex()],

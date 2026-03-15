@@ -203,20 +203,44 @@
   })
 
   const BASE = 220
-  const r = $derived(cellSize / BASE)
-  const holeW = $derived(Math.round(20 * r))
-  const holeH = $derived(Math.round(14 * r))
-  const holeGap = $derived(Math.round(14 * r))
-  const holeR = $derived(Math.round(3 * r))
-  const sprockH = $derived(Math.round(20 * r))
-  const sprockP = $derived(Math.round(8 * r))
-  const frameR = $derived(Math.round(18 * r))
-  const framePad = $derived(Math.round(4 * r))
-  const frameM = $derived(Math.round(8 * r))
-  const titleFs = $derived(Math.max(0.55, 0.82 * r))
-  const holeCount = $derived(Math.max(3, Math.floor(cellSize / (holeW + holeGap))))
-  const holeGapActual = $derived((cellSize - holeCount * holeW) / holeCount)
-  const holePadding = $derived(holeGapActual / 2)
+  const cellVars = $derived((() => {
+    const r = cellSize / BASE
+    const holeW = Math.round(20 * r)
+    const holeH = Math.round(14 * r)
+    const holeGap = Math.round(14 * r)
+    const holeR = Math.round(3 * r)
+    const sprockH = Math.round(20 * r)
+    const sprockP = Math.round(8 * r)
+    const frameR = Math.round(18 * r)
+    const framePad = Math.round(4 * r)
+    const frameM = Math.round(8 * r)
+    const titleFs = Math.max(0.55, 0.82 * r)
+    const holeCount = Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
+    const holeGapActual = (cellSize - holeCount * holeW) / holeCount
+    const holePadding = holeGapActual / 2
+    return [
+      `--hole-w:${holeW}px`,
+      `--hole-h:${holeH}px`,
+      `--hole-r:${holeR}px`,
+      `--hole-gap:${holeGapActual}px`,
+      `--hole-pad:${holePadding}px`,
+      `--hole-count:${holeCount}`,
+      `--sprock-h:${sprockH}px`,
+      `--sprock-p:${sprockP}px`,
+      `--frame-r:${frameR}px`,
+      `--frame-pad:${framePad}px`,
+      `--frame-m:${frameM}px`,
+      `--title-fs:${titleFs}rem`,
+      `--title-fs-lg:${titleFs * 1.5}rem`,
+      `--title-fs-sm:${Math.max(0.5, titleFs * 0.9)}rem`,
+    ].join(';')
+  })())
+  const holeCount = $derived((() => {
+    const r = cellSize / BASE
+    const holeW = Math.round(20 * r)
+    const holeGap = Math.round(14 * r)
+    return Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
+  })())
   const isActive = $derived(animating || dragging || isEntering)
   const sheenEls = $state<(HTMLElement | null)[]>([])
   let pressedIdx = $state<number | null>(null)
@@ -250,12 +274,7 @@
   class:film-strip--entering={isEntering}
   class:film-strip--dragging={dragging}
   class:film-strip--active={isActive}
-  style={`
-    --tilt:    ${tilt}deg;
-    --slide-x: ${slideX}px;
-    --cell:    ${cellSize}px;
-    opacity:   ${slideOpa};
-  `}
+  style={`--tilt:${tilt}deg;--slide-x:${slideX}px;--cell:${cellSize}px;opacity:${slideOpa};${cellVars}`}
 >
   <div class='strip-track' class:strip-track--active={isActive} style={`transform:translateX(${offset}px)`}>
     {#each loopCells as cell, i (cell.id + i)}
@@ -268,24 +287,24 @@
         onkeydown={e => e.key === 'Enter' && triggerFlash(i, cell.id)}
         onmouseenter={() => triggerSheen(i)}
         aria-label={cell.title ?? 'Open work'}
-        style={`width:${cellSize}px; height:${cellSize}px; padding:${sprockP}px 0`}
+
       >
         <div
           class='sprockets'
           aria-hidden='true'
-          style={`height:${sprockH}px; gap:${holeGapActual}px; padding:0 ${holePadding}px`}
+
         >
           {#each { length: holeCount } as _}
-            <div class='hole' style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}></div>
+            <div class='hole'></div>
           {/each}
         </div>
 
-        <div class='cell-frame' style={`border-radius:${frameR}px; margin:${framePad}px ${frameM}px`}>
+        <div class='cell-frame'>
           <div class='frame-inner' class:frame-inner--pressed={pressedIdx === i}>
             {#if cell.image}
               <div
                 class='img-wrap'
-                style={`border-radius:${frameR}px; font-size:${Math.max(0.5, titleFs * 0.9)}rem`}
+
               >
                 {cell.title ?? ''}
                 <img
@@ -294,16 +313,16 @@
                   draggable='false'
                   loading={i < cells.length ? 'eager' : 'lazy'}
                   decoding='async'
-                  style={`border-radius:${frameR}px`}
+
                 />
               </div>
             {:else}
-              <div class='frame-placeholder' style={`border-radius:${frameR}px`}></div>
+              <div class='frame-placeholder'></div>
             {/if}
           </div>
           {#if cell.title}
-            <div class='cell-title' aria-hidden='true' style={`border-radius:${frameR}px`}>
-              <span style={`font-size:${titleFs * 1.5}rem`}>{cell.title}</span>
+            <div class='cell-title' aria-hidden='true'>
+              <span>{cell.title}</span>
             </div>
           {/if}
           <div class='sheen' aria-hidden='true' bind:this={sheenEls[i]}></div>
@@ -312,10 +331,10 @@
         <div
           class='sprockets'
           aria-hidden='true'
-          style={`height:${sprockH}px; gap:${holeGapActual}px; padding:0 ${holePadding}px`}
+
         >
           {#each { length: holeCount } as _}
-            <div class='hole' style={`width:${holeW}px; height:${holeH}px; border-radius:${holeR}px`}></div>
+            <div class='hole'></div>
           {/each}
         </div>
       </div>
@@ -369,6 +388,9 @@
     box-sizing: border-box;
     cursor: pointer;
     position: relative;
+    width: var(--cell);
+    height: var(--cell);
+    padding: var(--sprock-p) 0;
   }
   .film-cell:focus-visible { outline: 2px solid rgba(255,64,0,0.6); outline-offset: -2px; }
 
@@ -380,12 +402,18 @@
     width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
+    height: var(--sprock-h);
+    gap: var(--hole-gap);
+    padding: 0 var(--hole-pad);
   }
 
   .hole {
     flex-shrink: 0;
     background: var(--color-secondary);
     opacity: 0.9;
+    width: var(--hole-w);
+    height: var(--hole-h);
+    border-radius: var(--hole-r);
   }
 
   .cell-frame {
@@ -397,6 +425,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: var(--frame-r);
+    margin: var(--frame-pad) var(--frame-m);
   }
 
   .img-wrap {
@@ -413,6 +443,8 @@
     text-transform: uppercase;
     word-break: break-word;
     line-height: 1.3;
+    border-radius: var(--frame-r);
+    font-size: var(--title-fs-sm);
   }
 
   .img-wrap img {
@@ -423,12 +455,14 @@
     object-fit: cover;
     display: block;
     background: var(--color-secondary);
+    border-radius: var(--frame-r);
   }
 
   .frame-placeholder {
     position: absolute;
     inset: 0;
     background: var(--color-secondary);
+    border-radius: var(--frame-r);
   }
 
   .frame-inner {
@@ -455,11 +489,13 @@
     opacity: 0;
     transition: opacity 0.18s ease;
     pointer-events: none;
+    border-radius: var(--frame-r);
   }
   .film-cell:hover .cell-title,
   .film-cell:focus-visible .cell-title { opacity: 1; }
   .cell-title span {
     font-family: var(--font-main);
+    font-size: var(--title-fs-lg);
     letter-spacing: 0.1em;
     color: var(--color-secondary);
     text-align: center;
