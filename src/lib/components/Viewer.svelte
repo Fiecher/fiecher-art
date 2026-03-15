@@ -157,11 +157,25 @@
     }
   })
 
+  let gateWidth = $state(0)
+
   $effect(() => {
-    const aspect = mediaAspect ?? (16 / 9)
-    if (!gateEl)
+    const el = gateEl
+    if (!el)
       return
-    const w = gateEl.getBoundingClientRect().width
+    const ro = new ResizeObserver(entries => {
+      gateWidth = entries[0]?.contentRect.width ?? 0
+    })
+    const rafId = requestAnimationFrame(() => ro.observe(el))
+    return () => {
+      cancelAnimationFrame(rafId)
+      ro.disconnect()
+    }
+  })
+
+  $effect(() => {
+    const w = gateWidth
+    const aspect = mediaAspect ?? (16 / 9)
     if (w > 0)
       gateHeight = w / aspect
   })
@@ -329,14 +343,12 @@
     transform: translateX(-50%);
     pointer-events: none;
     z-index: 0;
-    width: 60vw;
-    height: 55vh;
-    background: radial-gradient(
-      ellipse 50% 100% at 50% 0%,
-      rgba(223, 225, 215, 0.055) 0%,
-      rgba(223, 225, 215, 0.018) 40%,
-      transparent 100%
-    );
+    width: 0;
+    height: 0;
+    border-left:  90px solid transparent;
+    border-right: 90px solid transparent;
+    border-top: 52vh solid rgba(223, 225, 215, 0.02);
+    filter: blur(24px);
     transition: opacity 0.7s ease;
   }
 

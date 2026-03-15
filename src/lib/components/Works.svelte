@@ -240,6 +240,7 @@
   onMount(() => {
     updateWorksPage(initialSection)
 
+    let roRafId = 0
     const ro = new ResizeObserver(entries => {
       const rect = entries[0]?.contentRect
       if (!rect || rect.width <= 0 || rect.height <= 0)
@@ -247,21 +248,19 @@
       stageW = rect.width
       stageH = rect.height
     })
-    if (stageEl) {
-      ro.observe(stageEl)
-      stageW = stageEl.offsetWidth
-      stageH = stageEl.offsetHeight
-    }
 
     mounted = true
 
-    tick().then(() => tick()).then(() => {
+    roRafId = requestAnimationFrame(() => {
+      if (stageEl)
+        ro.observe(stageEl)
       requestAnimationFrame(() => {
         window.dispatchEvent(new CustomEvent('works:ready'))
       })
     })
 
     return () => {
+      cancelAnimationFrame(roRafId)
       ro.disconnect()
       cancelAnimationFrame(dragRafId)
       window.removeEventListener('mousemove', onGlobalMouseMove)
@@ -283,7 +282,7 @@
     bind:this={stageEl}
     onmousedown={onMouseDown}
   >
-    <div class='strip-slot strip-slot--top' style={`--slot-h:${slotH}px`}>
+    <div class='strip-slot' style={`height:${slotH}px; top:0`}>
       <FilmReel
         bind:this={reelTop}
         cells={topCells}
@@ -297,7 +296,7 @@
         {visible}
       />
     </div>
-    <div class='strip-slot strip-slot--bot' style={`--slot-h:${slotH}px; --slot-top:${slotH + stripGap}px`}>
+    <div class='strip-slot' style={`height:${slotH}px; top:${slotH + stripGap}px`}>
       <FilmReel
         bind:this={reelBot}
         cells={botCells}
@@ -364,17 +363,7 @@
   .strip-slot {
     position: absolute;
     left: 0; right: 0;
-    height: var(--slot-h);
     overflow: visible;
-  }
-
-  .strip-slot--top {
-    top: 0;
-  }
-
-  .strip-slot--bot {
-    top: 0;
-    transform: translateY(var(--slot-top));
   }
 
   .dot-nav {

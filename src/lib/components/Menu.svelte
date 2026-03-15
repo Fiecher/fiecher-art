@@ -23,14 +23,20 @@
   })
 
   $effect(() => {
-    if (!rowEl)
+    const el = rowEl
+    if (!el)
       return
-    const ro = new ResizeObserver(() => {
-      rowHeight = rowEl!.offsetHeight
+    let rafId = 0
+    const ro = new ResizeObserver(entries => {
+      rowHeight = entries[0]?.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight
     })
-    ro.observe(rowEl)
-    rowHeight = rowEl.offsetHeight
-    return () => ro.disconnect()
+    rafId = requestAnimationFrame(() => {
+      ro.observe(el)
+    })
+    return () => {
+      cancelAnimationFrame(rafId)
+      ro.disconnect()
+    }
   })
 </script>
 
@@ -172,6 +178,11 @@
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    filter:
+      drop-shadow(0 0 0.4px rgba(223, 225, 215, 0.55))
+      drop-shadow(0.5px 0 0.3px rgba(223, 225, 215, 0.35))
+      drop-shadow(-0.5px 0 0.3px rgba(223, 225, 215, 0.35))
+      drop-shadow(0 0.5px 0.3px rgba(223, 225, 215, 0.30));
     text-shadow:
       1px 1px 0 rgba(0, 0, 0, 0.6),
       0px 2px 4px rgba(0, 0, 0, 0.28);
