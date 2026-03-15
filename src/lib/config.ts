@@ -134,16 +134,6 @@ export const WORKS: Work[] = [
       src: '/works/revolution-br/NoSignal.jpg',
     }],
   },
-  {
-    id: 'test4',
-    title: 'test4',
-    year: 2024,
-    main: {
-      type: 'video',
-      src: '/works/symptom-bulletin/TheBulletin.mp4',
-      poster: '/works/test4/Preview.jpg',
-    },
-  },
 ]
 
 const MAIN_PER_SECTION = 4
