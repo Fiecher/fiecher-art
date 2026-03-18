@@ -4,7 +4,6 @@
 
   interface Props {
     cells: FilmCell[]
-    /** scroll offset in px, driven by parent, wraps modulo segmentPx */
     scrollX?: number
     tilt?: number
     entryX?: number
@@ -23,25 +22,20 @@
     visible = true,
   }: Props = $props()
 
-  // Triple cells so there are no hard edges — parent wraps scrollX in [0, segmentPx)
   const loopCells = $derived([...cells, ...cells, ...cells])
   const segmentCount = cells.length
 
-  // ─── Sizing ────────────────────────────────────────────────────────
   let stripEl = $state<HTMLElement | null>(null)
   let cellSize = $state(0)
 
   const segmentPx = $derived(segmentCount * cellSize)
-  // Partial cell visible on the left edge
   const bleedOffset = $derived(cellSize > 0 ? Math.round(cellSize * 0.55) : 0)
 
-  // Normalise into [0, segmentPx), then offset so middle copy is always on screen
   const normScrollX = $derived(
     segmentPx > 0 ? ((scrollX % segmentPx) + segmentPx) % segmentPx : 0,
   )
   const trackOffset = $derived(segmentPx > 0 ? -segmentPx + bleedOffset - normScrollX : 0)
 
-  // ─── Entry animation ───────────────────────────────────────────────
   let slideX = $state(entryX !== 0 ? 9999 : 0)
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
   let isEntering = $state(false)
@@ -61,7 +55,9 @@
     cancelAnimationFrame(_entranceRaf)
     const run = () => {
       const startX = Math.sign(entryX) * window.innerWidth * 0.75
-      slideX = startX; slideOpa = 0; isEntering = true
+      slideX = startX
+      slideOpa = 0
+      isEntering = true
       const DURATION = 1100
       const startTime = performance.now()
       const tick = (now: number) => {
@@ -71,7 +67,9 @@
         if (t < 1) {
           _entranceRaf = requestAnimationFrame(tick)
         } else {
-          slideX = 0; slideOpa = 1; isEntering = false
+          slideX = 0
+          slideOpa = 1
+          isEntering = false
         }
       }
       _entranceRaf = requestAnimationFrame(tick)
@@ -81,7 +79,6 @@
     else run()
   }
 
-  // ─── Sprocket variables ────────────────────────────────────────────
   const BASE = 220
   const sprockVars = $derived.by(() => {
     if (cellSize <= 0)
@@ -125,7 +122,6 @@
     return Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
   })
 
-  // ─── Sheen & press ────────────────────────────────────────────────
   const sheenEls = $state<(HTMLElement | null)[]>([])
   let pressedIdx = $state<number | null>(null)
 
@@ -145,7 +141,6 @@
   }
 
   function triggerFlash(idx: number, id: string) {
-    // Map loop index back to original cell id
     const originalId = cells[idx % segmentCount]?.id ?? id
     pressedIdx = idx
     setTimeout(() => {
@@ -154,7 +149,6 @@
     setTimeout(() => onCellClick?.(originalId), 120)
   }
 
-  // ─── Mount / ResizeObserver ────────────────────────────────────────
   onMount(() => {
     const ro = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width
@@ -165,7 +159,8 @@
     if (stripEl)
       ro.observe(stripEl)
     return () => {
-      ro.disconnect(); cancelAnimationFrame(_entranceRaf)
+      ro.disconnect()
+      cancelAnimationFrame(_entranceRaf)
     }
   })
 

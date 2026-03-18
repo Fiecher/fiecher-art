@@ -18,8 +18,8 @@
     image: withBase(w.main.poster ?? w.main.src),
   }))
   const half = Math.ceil(allCells.length / 2)
-  const topCells = allCells
-  const botCells = [...allCells.slice(half), ...allCells.slice(0, half)]
+  const topCells = allCells.slice(0, half)
+  const botCells = allCells.slice(half)
 
   let reelTop = $state<ReturnType<typeof FilmReel> | null>(null)
   let reelBot = $state<ReturnType<typeof FilmReel> | null>(null)
@@ -30,21 +30,9 @@
     stageH > 0 ? Math.max(120, Math.min(400, Math.round(stageH * 0.44))) : 240,
   )
 
-  // ─── Single scroll master ──────────────────────────────────────────
-  // Bot counter-scrolls: botScrollX = botPhase - topScrollX
-  // This makes them always move in opposite directions and snap together.
   let topScrollX = $state(0)
-  let cellSize = $state(0)
-  let botPhase = $state(0)
-  const botScrollX = $derived(botPhase - topScrollX)
+  const botScrollX = $derived(-topScrollX)
 
-  function initBotPhase() {
-    if (cellSize <= 0)
-      return
-    botPhase = Math.round(botCells.length / 2) * cellSize
-  }
-
-  // ─── Drag ──────────────────────────────────────────────────────────
   let isDragging = $state(false)
   let dragDistPx = 0
   let dragStartX = 0
@@ -56,26 +44,47 @@
   let dragRafId = 0
   let animRafId = 0
 
-  function ease(t: number) {
-    return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
+  function easeOut(t: number) {
+    return 1 - (1 - t) ** 3
   }
 
-  function snapNearest() {
+  function maybeSnap() {
     if (cellSize <= 0)
       return
-    const flingPx = velX * 80
-    const target = Math.round((topScrollX - flingPx) / cellSize) * cellSize
-    cancelAnimationFrame(animRafId)
-    const from = topScrollX
-    const dur = 420
-    const start = performance.now()
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / dur, 1)
-      topScrollX = from + (target - from) * ease(t)
-      if (t < 1)
-        animRafId = requestAnimationFrame(tick)
+
+    const speed = Math.abs(velX)
+    const FLING_THRESHOLD = 0.4
+
+    if (speed > FLING_THRESHOLD) {
+      const flingPx = velX * 200
+      const target = topScrollX + flingPx
+      cancelAnimationFrame(animRafId)
+      const from = topScrollX
+      const dur = Math.min(800, Math.abs(flingPx) * 2)
+      const start = performance.now()
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / dur, 1)
+        topScrollX = from + (target - from) * easeOut(t)
+        if (t < 1)
+          animRafId = requestAnimationFrame(tick)
+      }
+      animRafId = requestAnimationFrame(tick)
+    } else {
+      const target = Math.round(topScrollX / cellSize) * cellSize
+      if (Math.abs(target - topScrollX) < 2)
+        return
+      cancelAnimationFrame(animRafId)
+      const from = topScrollX
+      const dur = 300
+      const start = performance.now()
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / dur, 1)
+        topScrollX = from + (target - from) * easeOut(t)
+        if (t < 1)
+          animRafId = requestAnimationFrame(tick)
+      }
+      animRafId = requestAnimationFrame(tick)
     }
-    animRafId = requestAnimationFrame(tick)
   }
 
   function onMouseDown(e: MouseEvent) {
@@ -120,18 +129,21 @@
     window.removeEventListener('mousemove', onGlobalMouseMove)
     window.removeEventListener('mouseup', onGlobalMouseUp)
     if (dragRafId) {
-      cancelAnimationFrame(dragRafId); dragRafId = 0
+      cancelAnimationFrame(dragRafId)
+      dragRafId = 0
     }
     pendingX = null
     isDragging = false
-    snapNearest()
+    maybeSnap()
   }
 
-  // ─── Touch ────────────────────────────────────────────────────────
   let touchOriginX = 0
   let touchOriginY = 0
   let touchOriginT = 0
   let touchDragStartTopX = 0
+  let touchIsHorizontal: boolean | null = null
+
+  let cellSize = $state(0)
 
   function onTouchStart(e: TouchEvent) {
     cancelAnimationFrame(animRafId)
@@ -144,22 +156,29 @@
     lastClientT = performance.now()
     velX = 0
     dragDistPx = 0
+    touchIsHorizontal = null
   }
 
   function onTouchMove(e: TouchEvent) {
     const t = e.touches[0]
-    const dx = touchOriginX - t.clientX
-    const dy = touchOriginY - t.clientY
-    if (Math.abs(dx) > Math.abs(dy))
+    const dx = t.clientX - touchOriginX
+    const dy = t.clientY - touchOriginY
+
+    if (touchIsHorizontal === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      touchIsHorizontal = Math.abs(dx) >= Math.abs(dy)
+    }
+
+    if (touchIsHorizontal === true) {
       e.preventDefault()
-    const now = performance.now()
-    const dt = now - lastClientT
-    if (dt > 0)
-      velX = (lastClientX - t.clientX) / dt
-    lastClientX = t.clientX
-    lastClientT = now
-    dragDistPx = Math.abs(t.clientX - touchOriginX)
-    topScrollX = touchDragStartTopX - (t.clientX - touchOriginX)
+      const now = performance.now()
+      const dt = now - lastClientT
+      if (dt > 0)
+        velX = (lastClientX - t.clientX) / dt
+      lastClientX = t.clientX
+      lastClientT = now
+      dragDistPx = Math.abs(dx)
+      topScrollX = touchDragStartTopX - dx
+    }
   }
 
   function onTouchEnd(e: TouchEvent) {
@@ -167,12 +186,16 @@
     const ch = e.changedTouches[0]
     const dx = touchOriginX - ch.clientX
     const dy = touchOriginY - ch.clientY
-    if (Math.abs(dy) >= 45 && Math.abs(dy) > Math.abs(dx) && elapsed < 600) {
+
+    if (touchIsHorizontal === false && Math.abs(dy) >= 45 && elapsed < 600) {
       e.stopPropagation()
       navigate(dy > 0 ? 1 : -1)
       return
     }
-    snapNearest()
+
+    if (touchIsHorizontal === true) {
+      maybeSnap()
+    }
   }
 
   function handleCellClick(id: string) {
@@ -202,11 +225,7 @@
       if (!rect || rect.width <= 0 || rect.height <= 0)
         return
       stageH = rect.height
-      const newCellSize = Math.max(120, Math.min(560, Math.round(rect.width * 0.38)))
-      if (newCellSize !== cellSize) {
-        cellSize = newCellSize
-        initBotPhase()
-      }
+      cellSize = Math.max(120, Math.min(560, Math.round(rect.width * 0.38)))
     })
     mounted = true
     requestAnimationFrame(() => {
