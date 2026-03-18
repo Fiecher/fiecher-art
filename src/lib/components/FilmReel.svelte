@@ -4,170 +4,66 @@
 
   interface Props {
     cells: FilmCell[]
-    cellSize: number
+    /** scroll offset in px, driven by parent, wraps modulo segmentPx */
+    scrollX?: number
     tilt?: number
     entryX?: number
     entryDelay?: number
-    initialSection?: number
-    cellsPerSection?: number
     onCellClick?: (id: string) => void
     visible?: boolean
   }
 
-  const { cells, cellSize, tilt = 3, entryX = 0, entryDelay = 0, initialSection = 0, cellsPerSection = 2, onCellClick, visible = true }: Props = $props()
+  const {
+    cells,
+    scrollX = 0,
+    tilt = 2,
+    entryX = 0,
+    entryDelay = 0,
+    onCellClick,
+    visible = true,
+  }: Props = $props()
 
+  // Triple cells so there are no hard edges — parent wraps scrollX in [0, segmentPx)
   const loopCells = $derived([...cells, ...cells, ...cells])
-  const segmentLen = $derived(cells.length)
+  const segmentCount = cells.length
 
-  let offsetCells = $state(0)
-  const offset = $derived(offsetCells * cellSize)
+  // ─── Sizing ────────────────────────────────────────────────────────
+  let stripEl = $state<HTMLElement | null>(null)
+  let cellSize = $state(0)
 
-  let animating = false
-  let animFromCells = 0
-  let animTargetCells = 0
-  let animStart = 0
-  let animDur = 0
-  let rafId = 0
+  const segmentPx = $derived(segmentCount * cellSize)
+  // Partial cell visible on the left edge
+  const bleedOffset = $derived(cellSize > 0 ? Math.round(cellSize * 0.55) : 0)
 
-  let dragging = false
-  let dragStartX = 0
-  let dragStartCells = 0
-  let dragVelX = 0
-  let dragLastX = 0
-  let dragLastT = 0
-
-  function normalizeCells(v: number): number {
-    const s = segmentLen
-    if (s === 0)
-      return v
-    while (v < -2 * s) v += s
-    while (v > -s) v -= s
-    return v
-  }
-
-  function ease(t: number): number {
-    return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
-  }
-
-  function startRaf() {
-    if (rafId)
-      return
-    function tick(now: number) {
-      if (animating && visible) {
-        const t = Math.min((now - animStart) / animDur, 1)
-        const e = ease(t)
-        offsetCells = normalizeCells(
-          animFromCells + (animTargetCells - animFromCells) * e,
-        )
-        if (t >= 1) {
-          animating = false
-          offsetCells = animTargetCells
-          rafId = 0
-          return
-        }
-      } else if (!dragging) {
-        rafId = 0
-        return
-      }
-      rafId = requestAnimationFrame(tick)
-    }
-    rafId = requestAnimationFrame(tick)
-  }
-
-  export function scrollBy(px: number, duration = 700) {
-    if (cellSize <= 0)
-      return
-    const deltaCells = px / cellSize
-    animFromCells = offsetCells
-    animTargetCells = normalizeCells(offsetCells - deltaCells)
-    animStart = performance.now()
-    animDur = duration
-    animating = true
-    startRaf()
-  }
-
-  export function getDragDeltaCells(): number {
-    return dragging ? offsetCells - dragStartCells : 0
-  }
-
-  export function snapTo(targetOffsetCells: number, duration = 500) {
-    dragging = false
-    animFromCells = offsetCells
-    animTargetCells = normalizeCells(targetOffsetCells)
-    animStart = performance.now()
-    animDur = duration
-    animating = true
-    startRaf()
-  }
-
-  export function onDragStart(clientX: number) {
-    if (cellSize <= 0)
-      return
-    animating = false
-    dragging = true
-    dragStartX = clientX
-    dragStartCells = offsetCells
-    dragVelX = 0
-    dragLastX = clientX
-    dragLastT = performance.now()
-    startRaf()
-  }
-
-  export function onDragMove(clientX: number) {
-    if (!dragging || cellSize <= 0)
-      return
-    const now = performance.now()
-    const dt = now - dragLastT
-    if (dt > 0) {
-      dragVelX = (clientX - dragLastX) / dt
-    }
-    dragLastX = clientX
-    dragLastT = now
-    const deltaPx = clientX - dragStartX
-    offsetCells = normalizeCells(dragStartCells + deltaPx / cellSize)
-  }
-
-  export function onDragEnd() {
-    if (!dragging)
-      return
-    dragging = false
-  }
-
-  const entryXCompensated = $derived(
-    entryX === 0 ?
-      0 :
-        entryX + Math.sign(entryX) * Math.abs(initialSection) * cellsPerSection * cellSize,
+  // Normalise into [0, segmentPx), then offset so middle copy is always on screen
+  const normScrollX = $derived(
+    segmentPx > 0 ? ((scrollX % segmentPx) + segmentPx) % segmentPx : 0,
   )
+  const trackOffset = $derived(segmentPx > 0 ? -segmentPx + bleedOffset - normScrollX : 0)
+
+  // ─── Entry animation ───────────────────────────────────────────────
   let slideX = $state(entryX !== 0 ? 9999 : 0)
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
   let isEntering = $state(false)
+  let _entranceRaf = 0
 
-  function easeOvershoot(t: number): number {
+  function easeOut3(t: number) {
+    return 1 - (1 - t) ** 3
+  }
+  function easeOvershoot(t: number) {
     const s = 0.4
     return 1 + (s + 1) * (t - 1) ** 3 + s * (t - 1) ** 2
   }
 
-  function easeOut3(t: number): number {
-    return 1 - (1 - t) ** 3
-  }
-
-  let _entranceRaf = 0
-
   export function playEntrance(delay = entryDelay) {
     if (entryX === 0)
       return
-
     cancelAnimationFrame(_entranceRaf)
-
     const run = () => {
       const startX = Math.sign(entryX) * window.innerWidth * 0.75
-      slideX = startX
-      slideOpa = 0
-      isEntering = true
-
+      slideX = startX; slideOpa = 0; isEntering = true
       const DURATION = 1100
       const startTime = performance.now()
-
       const tick = (now: number) => {
         const t = Math.min((now - startTime) / DURATION, 1)
         slideX = startX * (1 - easeOvershoot(t))
@@ -175,35 +71,21 @@
         if (t < 1) {
           _entranceRaf = requestAnimationFrame(tick)
         } else {
-          slideX = 0
-          slideOpa = 1
-          isEntering = false
+          slideX = 0; slideOpa = 1; isEntering = false
         }
       }
       _entranceRaf = requestAnimationFrame(tick)
     }
-
-    if (delay > 0) {
-      window.setTimeout(run, delay)
-    } else {
-      run()
-    }
+    if (delay > 0)
+      setTimeout(run, delay)
+    else run()
   }
 
-  let _mounted = false
-
-  onMount(() => {
-    offsetCells = normalizeCells(-segmentLen)
-    _mounted = true
-  })
-
-  onDestroy(() => {
-    cancelAnimationFrame(rafId)
-    cancelAnimationFrame(_entranceRaf)
-  })
-
+  // ─── Sprocket variables ────────────────────────────────────────────
   const BASE = 220
-  const cellVars = $derived((() => {
+  const sprockVars = $derived.by(() => {
+    if (cellSize <= 0)
+      return ''
     const r = cellSize / BASE
     const holeW = Math.round(20 * r)
     const holeH = Math.round(14 * r)
@@ -214,7 +96,7 @@
     const frameR = Math.round(18 * r)
     const framePad = Math.round(4 * r)
     const frameM = Math.round(8 * r)
-    const titleFs = Math.max(0.55, 0.82 * r)
+    const titleFsLg = Math.max(0.75, 1.2 * r)
     const holeCount = Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
     const holeGapActual = (cellSize - holeCount * holeW) / holeCount
     const holePadding = holeGapActual / 2
@@ -230,18 +112,20 @@
       `--frame-r:${frameR}px`,
       `--frame-pad:${framePad}px`,
       `--frame-m:${frameM}px`,
-      `--title-fs:${titleFs}rem`,
-      `--title-fs-lg:${titleFs * 1.5}rem`,
-      `--title-fs-sm:${Math.max(0.5, titleFs * 0.9)}rem`,
+      `--title-fs-lg:${titleFsLg}rem`,
     ].join(';')
-  })())
-  const holeCount = $derived((() => {
+  })
+
+  const holeCount = $derived.by(() => {
+    if (cellSize <= 0)
+      return 4
     const r = cellSize / BASE
     const holeW = Math.round(20 * r)
     const holeGap = Math.round(14 * r)
     return Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
-  })())
-  const isActive = $derived(animating || dragging || isEntering)
+  })
+
+  // ─── Sheen & press ────────────────────────────────────────────────
   const sheenEls = $state<(HTMLElement | null)[]>([])
   let pressedIdx = $state<number | null>(null)
 
@@ -253,47 +137,61 @@
     el.animate(
       [
         { transform: 'translateX(-250%) skewX(-15deg)', opacity: 0 },
-        { transform: 'translateX(-80%)  skewX(-15deg)', opacity: 1, offset: 0.1 },
-        { transform: 'translateX(250%)  skewX(-15deg)', opacity: 0 },
+        { transform: 'translateX(-80%) skewX(-15deg)', opacity: 1, offset: 0.1 },
+        { transform: 'translateX(250%) skewX(-15deg)', opacity: 0 },
       ],
-      { duration: 900, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+      { duration: 900, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'forwards' },
     )
   }
 
   function triggerFlash(idx: number, id: string) {
+    // Map loop index back to original cell id
+    const originalId = cells[idx % segmentCount]?.id ?? id
     pressedIdx = idx
-    window.setTimeout(() => {
+    setTimeout(() => {
       pressedIdx = null
     }, 180)
-    window.setTimeout(() => onCellClick?.(id), 120)
+    setTimeout(() => onCellClick?.(originalId), 120)
   }
+
+  // ─── Mount / ResizeObserver ────────────────────────────────────────
+  onMount(() => {
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width
+      if (!w || w <= 0)
+        return
+      cellSize = Math.max(120, Math.min(560, Math.round(w * 0.38)))
+    })
+    if (stripEl)
+      ro.observe(stripEl)
+    return () => {
+      ro.disconnect(); cancelAnimationFrame(_entranceRaf)
+    }
+  })
+
+  onDestroy(() => cancelAnimationFrame(_entranceRaf))
 </script>
 
 <div
   class='film-strip'
   class:film-strip--entering={isEntering}
-  class:film-strip--dragging={dragging}
-  class:film-strip--active={isActive}
-  style={`--tilt:${tilt}deg;--slide-x:${slideX}px;--cell:${cellSize}px;opacity:${slideOpa};${cellVars}`}
+  bind:this={stripEl}
+  style={`--tilt:${tilt}deg; --slide-x:${slideX}px; --cell:${cellSize}px; opacity:${slideOpa}; ${sprockVars}`}
 >
-  <div class='strip-track' class:strip-track--active={isActive} style={`transform:translateX(${offset}px)`}>
-    {#each loopCells as cell, i (cell.id + i)}
+  <div class='strip-track' style={`transform: translateX(${trackOffset}px)`}>
+    {#each loopCells as cell, i (i)}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class='film-cell'
         role='button'
-        tabindex={i < cells.length ? 0 : -1}
-        aria-hidden={i >= cells.length ? 'true' : undefined}
+        tabindex={i >= segmentCount && i < segmentCount * 2 ? 0 : -1}
+        aria-hidden={i < segmentCount || i >= segmentCount * 2 ? 'true' : undefined}
+        aria-label={cell.title ?? 'Open work'}
         onclick={() => triggerFlash(i, cell.id)}
         onkeydown={e => e.key === 'Enter' && triggerFlash(i, cell.id)}
         onmouseenter={() => triggerSheen(i)}
-        aria-label={cell.title ?? 'Open work'}
-
       >
-        <div
-          class='sprockets'
-          aria-hidden='true'
-
-        >
+        <div class='sprockets' aria-hidden='true'>
           {#each { length: holeCount } as _}
             <div class='hole'></div>
           {/each}
@@ -302,37 +200,21 @@
         <div class='cell-frame'>
           <div class='frame-inner' class:frame-inner--pressed={pressedIdx === i}>
             {#if cell.image}
-              <div
-                class='img-wrap'
-
-              >
+              <div class='img-wrap'>
                 {cell.title ?? ''}
-                <img
-                  src={cell.image}
-                  alt=''
-                  draggable='false'
-                  loading={i < cells.length ? 'eager' : 'lazy'}
-                  decoding='async'
-
-                />
+                <img src={cell.image} alt='' draggable='false' loading='eager' decoding='async' />
               </div>
             {:else}
               <div class='frame-placeholder'></div>
             {/if}
           </div>
           {#if cell.title}
-            <div class='cell-title' aria-hidden='true'>
-              <span>{cell.title}</span>
-            </div>
+            <div class='cell-title' aria-hidden='true'><span>{cell.title}</span></div>
           {/if}
           <div class='sheen' aria-hidden='true' bind:this={sheenEls[i]}></div>
         </div>
 
-        <div
-          class='sprockets'
-          aria-hidden='true'
-
-        >
+        <div class='sprockets' aria-hidden='true'>
           {#each { length: holeCount } as _}
             <div class='hole'></div>
           {/each}
@@ -345,37 +227,19 @@
 <style>
   .film-strip {
     position: absolute;
-    left: -25%; right: -25%;
+    left: 0; right: 0;
     top: 50%;
     height: var(--cell);
-    transform: translateY(-50%) rotate(var(--tilt, 3deg)) translateX(var(--slide-x, 0px));
+    transform: translateY(-50%) rotate(var(--tilt, 0deg)) translateX(var(--slide-x, 0px));
     background: var(--color-primary);
     overflow: hidden;
-    cursor: grab;
-    transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-
-  .film-strip--active {
-    will-change: transform, opacity;
-  }
-
-  .film-strip--entering {
-    transition: none;
-  }
-
-  .film-strip--dragging {
-    cursor: grabbing;
-    user-select: none;
-    transition: none;
-  }
+  .film-strip--entering { transition: none; }
 
   .strip-track {
     display: flex;
     flex-direction: row;
     height: 100%;
-  }
-
-  .strip-track--active {
     will-change: transform;
   }
 
@@ -430,11 +294,8 @@
   }
 
   .img-wrap {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
     text-align: center;
     padding: 8px;
     font-family: var(--font-main);
@@ -444,14 +305,12 @@
     word-break: break-word;
     line-height: 1.3;
     border-radius: var(--frame-r);
-    font-size: var(--title-fs-sm);
+    font-size: 0.65rem;
   }
 
   .img-wrap img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
     object-fit: cover;
     display: block;
     background: var(--color-secondary);
@@ -459,21 +318,15 @@
   }
 
   .frame-placeholder {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: var(--color-secondary);
     border-radius: var(--frame-r);
   }
 
   .frame-inner {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-      transform 0.1s cubic-bezier(0.4, 0, 0.6, 1),
-      box-shadow 0.1s ease;
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s cubic-bezier(0.4,0,0.6,1), box-shadow 0.1s ease;
     transform-origin: center center;
     transform: scale(1.05);
   }
@@ -501,14 +354,11 @@
     text-align: center;
     padding: 0 8px;
     text-transform: uppercase;
-    text-shadow:
-      1px 1px 0 rgba(0,0,0,0.65),
-      2px 2px 4px rgba(0,0,0,0.30);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.65), 2px 2px 4px rgba(0,0,0,0.30);
   }
 
   .sheen {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     pointer-events: none;
     border-radius: inherit;
     overflow: hidden;

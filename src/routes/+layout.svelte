@@ -2,7 +2,7 @@
   import { base } from '$app/paths'
   import LoadingScreen from '$lib/components/LoadingScreen.svelte'
   import WorkModal from '$lib/components/Viewer.svelte'
-  import { globalProgress, goToSection, progressToTarget, TOTAL_STEPS, worksPage } from '$lib/navigation'
+  import { activeSection, goToSection, SECTIONS } from '$lib/navigation'
   import { isVideoFullscreen, modalCell } from '$lib/viewer'
   import { get } from 'svelte/store'
   import './layout.css'
@@ -15,7 +15,10 @@
     window.dispatchEvent(new CustomEvent('app:loaded'))
   }
 
+  // ─── Scrollbar: 3 equal sections ──────────────────────────────────
+  // REEL=step0  WORKS=step1  CONTACT=step2
   const STEP_PX = 500
+  const TOTAL_STEPS = SECTIONS.length - 1 // = 2
 
   let scrollEl = $state<HTMLElement | undefined>()
   let viewportH = $state(0)
@@ -26,37 +29,37 @@
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
 
-  let _initialScrollDone = false
+  function sectionToStep(s: typeof SECTIONS[number]): number {
+    return SECTIONS.indexOf(s)
+  }
+
   let _programmaticScroll = false
   let _programmaticTimer = 0
+  let _initialScrollDone = false
 
-  function syncScrollbar(progress: number, instant = false) {
+  function syncScrollbar(instant = false) {
     if (!scrollEl)
       return
-    const target = Math.round(progress * TOTAL_STEPS) * STEP_PX
+    const step = sectionToStep(get(activeSection))
+    const target = Math.max(0, Math.min(step, TOTAL_STEPS)) * STEP_PX
     if (Math.abs(scrollEl.scrollTop - target) < 2)
       return
-
     _programmaticScroll = true
     clearTimeout(_programmaticTimer)
     _programmaticTimer = window.setTimeout(() => {
       _programmaticScroll = false
     }, 700)
-
     scrollEl.scrollTo({ top: target, behavior: instant ? 'instant' : 'smooth' })
   }
 
   $effect(() => {
-    const progress = $globalProgress
-    void $worksPage
-
+    void $activeSection
     if (!_initialScrollDone) {
       _initialScrollDone = true
-      requestAnimationFrame(() => syncScrollbar(progress, true))
+      requestAnimationFrame(() => syncScrollbar(true))
       return
     }
-
-    syncScrollbar(progress)
+    syncScrollbar()
   })
 
   $effect(() => {
@@ -72,29 +75,25 @@
     }
   })
 
-  function onScrollEnd() {
-    if (_programmaticScroll)
-      return
-    if (get(modalCell) || get(isVideoFullscreen))
-      return
-
-    const step = Math.round(scrollEl!.scrollTop / STEP_PX)
-    const clamped = Math.max(0, Math.min(TOTAL_STEPS, step))
-    const { section, pageIndex } = progressToTarget(clamped / TOTAL_STEPS)
-    goToSection(section, pageIndex ?? null)
-  }
-
   function isBlocked() {
     return get(modalCell) || get(isVideoFullscreen)
   }
 
   function tryNavigate(dir: 1 | -1) {
-    const current = Math.round($globalProgress * TOTAL_STEPS)
+    if (isBlocked())
+      return
+    const current = sectionToStep(get(activeSection))
     const next = Math.max(0, Math.min(TOTAL_STEPS, current + dir))
     if (next === current)
       return
-    const { section, pageIndex } = progressToTarget(next / TOTAL_STEPS)
-    goToSection(section, pageIndex ?? null)
+    goToSection(SECTIONS[next])
+  }
+
+  function onScrollEnd() {
+    if (_programmaticScroll || isBlocked() || !scrollEl)
+      return
+    const step = Math.max(0, Math.min(Math.round(scrollEl.scrollTop / STEP_PX), TOTAL_STEPS))
+    goToSection(SECTIONS[step])
   }
 
   let lastWheelStep = 0
@@ -131,8 +130,7 @@
     const dx = touch.x - e.changedTouches[0].clientX
     const dy = touch.y - e.changedTouches[0].clientY
     if (Math.abs(dy) >= Math.abs(dx) && Math.abs(dy) >= SWIPE_MIN_PX) {
-      const dir = dy > 0 ? 1 : -1
-      requestAnimationFrame(() => tryNavigate(dir))
+      requestAnimationFrame(() => tryNavigate(dy > 0 ? 1 : -1))
     }
   }
 </script>
