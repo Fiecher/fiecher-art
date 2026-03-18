@@ -13,7 +13,7 @@ export const APP_CONFIG = {
     email: 'stepanbelebezev@gmail.com',
   },
   social: {
-    email: 'stepanbelebezev@gmail.com',
+    email: 'mailto:stepanbelebezev@gmail.com',
     telegram: 'https://t.me/fiecher',
     github: 'https://github.com/fiecher',
     youtube: 'https://youtube.com/@insomniaCR',
