@@ -88,7 +88,11 @@
       class:contact-wrapper--expanded={isContact}
       aria-hidden={!isContact}
     >
-      <div class='contact-frame'>
+      <div class='contact-frame' class:contact-frame--visible={isContact}>
+        <div class='corner corner--tl' aria-hidden='true'></div>
+        <div class='corner corner--tr' aria-hidden='true'></div>
+        <div class='corner corner--bl' aria-hidden='true'></div>
+        <div class='corner corner--br' aria-hidden='true'></div>
         <div
           class='contact-inner'
           class:contact-inner--visible={isContact}
@@ -234,5 +238,42 @@
   .footer-spacer {
     visibility: hidden;
     height: 4.5rem;
+  }
+
+  .corner {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition:
+      opacity   0.15s ease,
+      transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .corner--tl { top: 0px; left: 0px;
+    border-top:  0.25rem solid var(--color-secondary);
+    border-left: 0.25rem solid var(--color-secondary);
+    transform: translate(6px, 6px); }
+  .corner--tr { top: 0px; right: 0px;
+    border-top:   0.25rem solid var(--color-secondary);
+    border-right: 0.25rem solid var(--color-secondary);
+    transform: translate(-6px, 6px); }
+  .corner--bl { bottom: 0px; left: 0px;
+    border-bottom: 0.25rem solid var(--color-secondary);
+    border-left:   0.25rem solid var(--color-secondary);
+    transform: translate(6px, -6px); }
+  .corner--br { bottom: 0px; right: 0px;
+    border-bottom: 0.25rem solid var(--color-secondary);
+    border-right:  0.25rem solid var(--color-secondary);
+    transform: translate(-6px, -6px); }
+
+  :global(.contact-frame--visible) .corner {
+    opacity: 1;
+    transform: translate(0, 0);
+    transition:
+      opacity   0.15s ease 0.15s,
+      transform 0.20s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
   }
 </style>
