@@ -51,8 +51,9 @@
   }
 
   function showControls() {
-    controlsVisible = true
     clearTimeout(hideTimer)
+    if (!controlsVisible)
+      controlsVisible = true
     hideTimer = window.setTimeout(() => {
       controlsVisible = false
     }, 2500)

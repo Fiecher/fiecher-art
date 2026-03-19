@@ -4,7 +4,6 @@
 
   interface Props {
     cells: FilmCell[]
-    scrollX?: number
     tilt?: number
     entryX?: number
     entryDelay?: number
@@ -15,7 +14,6 @@
 
   const {
     cells,
-    scrollX = 0,
     tilt = 2,
     entryX = 0,
     entryDelay = 0,
@@ -28,15 +26,21 @@
   const segmentCount = cells.length
 
   let stripEl = $state<HTMLElement | null>(null)
+  let trackEl = $state<HTMLElement | null>(null)
   let cellSize = $state(0)
 
   const segmentPx = $derived(segmentCount * cellSize)
   const bleedOffset = $derived(cellSize > 0 ? Math.round(cellSize * 0.55) : 0)
 
-  const normScrollX = $derived(
-    segmentPx > 0 ? ((scrollX % segmentPx) + segmentPx) % segmentPx : 0,
-  )
-  const trackOffset = $derived(segmentPx > 0 ? -segmentPx + bleedOffset - normScrollX : 0)
+  const trackOffset = $derived(segmentPx > 0 ? -segmentPx + bleedOffset : 0)
+
+  export function setScrollX(x: number) {
+    if (!trackEl || segmentPx <= 0)
+      return
+    const norm = ((x % segmentPx) + segmentPx) % segmentPx
+    const offset = -segmentPx + bleedOffset - norm
+    trackEl.style.transform = `translateX(${offset}px)`
+  }
 
   let slideX = $state(entryX !== 0 ? 9999 : 0)
   let slideOpa = $state(entryX !== 0 ? 0 : 1)
@@ -84,7 +88,7 @@
   const BASE = 220
   const filmMetrics = $derived.by(() => {
     if (cellSize <= 0)
-      return { cssVars: '', holeCount: 4 }
+      return { cssVars: '' }
     const r = cellSize / BASE
     const holeW = Math.round(20 * r)
     const holeH = Math.round(14 * r)
@@ -105,7 +109,6 @@
       `--hole-r:${holeR}px`,
       `--hole-gap:${holeGapActual}px`,
       `--hole-pad:${holePadding}px`,
-      `--hole-count:${holeCount}`,
       `--sprock-h:${sprockH}px`,
       `--sprock-p:${sprockP}px`,
       `--frame-r:${frameR}px`,
@@ -113,14 +116,12 @@
       `--frame-m:${frameM}px`,
       `--title-fs-lg:${titleFsLg}rem`,
     ].join(';')
-    return { cssVars, holeCount }
+    return { cssVars }
   })
 
   const sprockVars = $derived(filmMetrics.cssVars)
-  const holeCount = $derived(filmMetrics.holeCount)
-
   let renderedCount = $state(0)
-  const BATCH = 4
+  const BATCH = 8
   let _batchRafId = 0
   let _renderStarted = false
 
@@ -168,16 +169,22 @@
   }
 
   onMount(() => {
+    let resizeTimer = 0
     const ro = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width
       if (!w || w <= 0)
         return
-      cellSize = Math.max(120, Math.min(560, Math.round(w * 0.38)))
+      const next = Math.max(120, Math.min(560, Math.round(w * 0.38)))
+      cancelAnimationFrame(resizeTimer)
+      resizeTimer = requestAnimationFrame(() => {
+        cellSize = next
+      })
     })
     if (stripEl)
       ro.observe(stripEl)
     return () => {
       ro.disconnect()
+      cancelAnimationFrame(resizeTimer)
       cancelAnimationFrame(_entranceRaf)
       cancelAnimationFrame(_batchRafId)
     }
@@ -190,7 +197,7 @@
   bind:this={stripEl}
   style={`--tilt:${tilt}deg; --slide-x:${slideX}px; --cell:${cellSize}px; opacity:${slideOpa}; ${sprockVars}`}
 >
-  <div class='strip-track' style={`transform: translateX(${trackOffset}px)`}>
+  <div class='strip-track' bind:this={trackEl} style={`transform: translateX(${trackOffset}px)`}>
     {#each loopCells.slice(0, renderedCount) as cell, i (`${Math.floor(i / segmentCount)}-${cell.id}`)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
@@ -203,18 +210,14 @@
         onkeydown={e => e.key === 'Enter' && triggerFlash(i, cell.id)}
         onmouseenter={() => triggerSheen(i)}
       >
-        <div class='sprockets' aria-hidden='true'>
-          {#each { length: holeCount } as _}
-            <div class='hole'></div>
-          {/each}
-        </div>
+        <div class='sprockets' aria-hidden='true'></div>
 
         <div class='cell-frame'>
           <div class='frame-inner' class:frame-inner--pressed={pressedIdx === i}>
             {#if cell.image}
               <div class='img-wrap'>
                 {cell.title ?? ''}
-                <img src={cell.image} alt='' draggable='false' loading='eager' decoding='async' />
+                <img src={cell.image} alt='' draggable='false' loading='lazy' decoding='async' />
               </div>
             {:else}
               <div class='frame-placeholder'></div>
@@ -226,11 +229,7 @@
           <div class='sheen' aria-hidden='true' bind:this={sheenEls[i]}></div>
         </div>
 
-        <div class='sprockets' aria-hidden='true'>
-          {#each { length: holeCount } as _}
-            <div class='hole'></div>
-          {/each}
-        </div>
+        <div class='sprockets' aria-hidden='true'></div>
       </div>
     {/each}
   </div>
@@ -269,29 +268,46 @@
     height: var(--cell);
     padding: var(--sprock-p) 0;
     contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: var(--cell) var(--cell);
   }
   .film-cell:focus-visible { outline: 2px solid rgba(255,64,0,0.6); outline-offset: -2px; }
 
   .sprockets {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
     width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
     height: var(--sprock-h);
-    gap: var(--hole-gap);
-    padding: 0 var(--hole-pad);
-  }
-
-  .hole {
-    flex-shrink: 0;
-    background: var(--color-secondary);
-    opacity: 0.9;
-    width: var(--hole-w);
-    height: var(--hole-h);
-    border-radius: var(--hole-r);
+    background-image: repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent var(--hole-pad),
+      rgba(223, 225, 215, 0.9) var(--hole-pad),
+      rgba(223, 225, 215, 0.9) calc(var(--hole-pad) + var(--hole-w)),
+      transparent calc(var(--hole-pad) + var(--hole-w)),
+      transparent calc(var(--hole-pad) + var(--hole-w) + var(--hole-gap))
+    );
+    background-size: calc(var(--hole-w) + var(--hole-gap)) 100%;
+    background-repeat: repeat-x;
+    background-position: 0 center;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(50% - var(--hole-h) / 2),
+      black calc(50% - var(--hole-h) / 2),
+      black calc(50% + var(--hole-h) / 2),
+      transparent calc(50% + var(--hole-h) / 2),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(50% - var(--hole-h) / 2),
+      black calc(50% - var(--hole-h) / 2),
+      black calc(50% + var(--hole-h) / 2),
+      transparent calc(50% + var(--hole-h) / 2),
+      transparent 100%
+    );
   }
 
   .cell-frame {

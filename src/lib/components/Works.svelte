@@ -30,8 +30,13 @@
     stageH > 0 ? Math.max(120, Math.min(400, Math.round(stageH * 0.44))) : 240,
   )
 
-  let topScrollX = $state(0)
-  const botScrollX = $derived(-topScrollX)
+  let topScrollX = 0
+
+  function applyScroll(x: number) {
+    topScrollX = x
+    reelTop?.setScrollX(x)
+    reelBot?.setScrollX(-x)
+  }
 
   let cellSize = $state(0)
 
@@ -66,7 +71,7 @@
       const start = performance.now()
       const tick = (now: number) => {
         const t = Math.min((now - start) / dur, 1)
-        topScrollX = from + (target - from) * easeOut(t)
+        applyScroll(from + (target - from) * easeOut(t))
         if (t < 1)
           animRafId = requestAnimationFrame(tick)
       }
@@ -81,7 +86,7 @@
       const start = performance.now()
       const tick = (now: number) => {
         const t = Math.min((now - start) / dur, 1)
-        topScrollX = from + (target - from) * easeOut(t)
+        applyScroll(from + (target - from) * easeOut(t))
         if (t < 1)
           animRafId = requestAnimationFrame(tick)
       }
@@ -123,7 +128,7 @@
     dragRafId = 0
     if (!isDragging || pendingX === null)
       return
-    topScrollX = dragStartTopX - (pendingX - dragStartX)
+    applyScroll(dragStartTopX - (pendingX - dragStartX))
     pendingX = null
   }
 
@@ -177,7 +182,7 @@
       lastClientX = t.clientX
       lastClientT = now
       dragDistPx = Math.abs(dx)
-      topScrollX = touchDragStartTopX - dx
+      applyScroll(touchDragStartTopX - dx)
     }
   }
 
@@ -268,7 +273,6 @@
       <FilmReel
         bind:this={reelTop}
         cells={topCells}
-        scrollX={topScrollX}
         tilt={2}
         entryX={-600}
         {entryDelay}
@@ -281,7 +285,6 @@
       <FilmReel
         bind:this={reelBot}
         cells={botCells}
-        scrollX={botScrollX}
         tilt={-2}
         entryX={600}
         {entryDelay}

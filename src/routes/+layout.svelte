@@ -19,11 +19,12 @@
   const TOTAL_STEPS = SECTIONS.length - 1 // = 2
 
   let scrollEl = $state<HTMLElement | undefined>()
-  let viewportH = $state(0)
 
-  $effect(() => {
-    viewportH = window.visualViewport?.height ?? window.innerHeight
-  })
+  let viewportH = $state(
+    typeof window !== 'undefined' ?
+      (window.visualViewport?.height ?? window.innerHeight) :
+        800,
+  )
 
   const phantomH = $derived(STEP_PX * TOTAL_STEPS + viewportH)
 
