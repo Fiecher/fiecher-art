@@ -4,23 +4,17 @@
 
   const { activeItem, onSelect }: { activeItem: Section, onSelect: (s: Section) => void } = $props()
 
-  let active = $state<Section>(SECTIONS[0])
   let isDropdownOpen = $state(false)
 
   let rowEl = $state<HTMLButtonElement | null>(null)
   let rowHeight = $state(0)
 
-  const activeIndex = $derived(SECTIONS.indexOf(active))
+  const activeIndex = $derived(SECTIONS.indexOf(activeItem))
 
   function selectMenuItem(item: Section): void {
-    active = item
     isDropdownOpen = false
     onSelect(item)
   }
-
-  $effect(() => {
-    active = activeItem ?? SECTIONS[0]
-  })
 
   $effect(() => {
     const el = rowEl
@@ -48,7 +42,7 @@
       <li>
         <button
           class='menu-text'
-          class:menu-text--active={item === active}
+          class:menu-text--active={item === activeItem}
           onclick={() => selectMenuItem(item)}
           type='button'
         >{item}</button>
@@ -77,7 +71,7 @@
           <button
             bind:this={rowEl}
             class='menu-text menu-col-item'
-            class:menu-text--active={SECTIONS[0] === active}
+            class:menu-text--active={SECTIONS[0] === activeItem}
             onclick={() => selectMenuItem(SECTIONS[0])}
             type='button'
             tabindex={isDropdownOpen ? 0 : -1}
@@ -87,7 +81,7 @@
           <li>
             <button
               class='menu-text menu-col-item'
-              class:menu-text--active={item === active}
+              class:menu-text--active={item === activeItem}
               onclick={() => selectMenuItem(item)}
               type='button'
               tabindex={isDropdownOpen ? 0 : -1}

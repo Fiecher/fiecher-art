@@ -209,6 +209,5 @@
     mix-blend-mode: multiply;
     opacity: 0.82;
     will-change: transform;
-    transform: translateZ(0);
   }
 </style>

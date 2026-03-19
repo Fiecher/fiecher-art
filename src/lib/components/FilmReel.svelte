@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import { onDestroy, onMount } from 'svelte'
+  import { onMount } from 'svelte'
   import type { FilmCell } from '$lib/types'
 
   interface Props {
@@ -9,6 +9,7 @@
     entryX?: number
     entryDelay?: number
     onCellClick?: (id: string) => void
+    onReady?: () => void
     visible?: boolean
   }
 
@@ -19,6 +20,7 @@
     entryX = 0,
     entryDelay = 0,
     onCellClick,
+    onReady,
     visible = true,
   }: Props = $props()
 
@@ -80,9 +82,9 @@
   }
 
   const BASE = 220
-  const sprockVars = $derived.by(() => {
+  const filmMetrics = $derived.by(() => {
     if (cellSize <= 0)
-      return ''
+      return { cssVars: '', holeCount: 4 }
     const r = cellSize / BASE
     const holeW = Math.round(20 * r)
     const holeH = Math.round(14 * r)
@@ -97,7 +99,7 @@
     const holeCount = Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
     const holeGapActual = (cellSize - holeCount * holeW) / holeCount
     const holePadding = holeGapActual / 2
-    return [
+    const cssVars = [
       `--hole-w:${holeW}px`,
       `--hole-h:${holeH}px`,
       `--hole-r:${holeR}px`,
@@ -111,15 +113,31 @@
       `--frame-m:${frameM}px`,
       `--title-fs-lg:${titleFsLg}rem`,
     ].join(';')
+    return { cssVars, holeCount }
   })
 
-  const holeCount = $derived.by(() => {
-    if (cellSize <= 0)
-      return 4
-    const r = cellSize / BASE
-    const holeW = Math.round(20 * r)
-    const holeGap = Math.round(14 * r)
-    return Math.max(3, Math.floor(cellSize / (holeW + holeGap)))
+  const sprockVars = $derived(filmMetrics.cssVars)
+  const holeCount = $derived(filmMetrics.holeCount)
+
+  let renderedCount = $state(0)
+  const BATCH = 4
+  let _batchRafId = 0
+  let _renderStarted = false
+
+  $effect(() => {
+    const total = loopCells.length
+    if (cellSize <= 0 || _renderStarted)
+      return
+    _renderStarted = true
+    const scheduleNext = () => {
+      renderedCount = Math.min(renderedCount + BATCH, total)
+      if (renderedCount < total) {
+        _batchRafId = requestAnimationFrame(scheduleNext)
+      } else {
+        _batchRafId = requestAnimationFrame(() => onReady?.())
+      }
+    }
+    _batchRafId = requestAnimationFrame(scheduleNext)
   })
 
   const sheenEls = $state<(HTMLElement | null)[]>([])
@@ -161,10 +179,9 @@
     return () => {
       ro.disconnect()
       cancelAnimationFrame(_entranceRaf)
+      cancelAnimationFrame(_batchRafId)
     }
   })
-
-  onDestroy(() => cancelAnimationFrame(_entranceRaf))
 </script>
 
 <div
@@ -174,7 +191,7 @@
   style={`--tilt:${tilt}deg; --slide-x:${slideX}px; --cell:${cellSize}px; opacity:${slideOpa}; ${sprockVars}`}
 >
   <div class='strip-track' style={`transform: translateX(${trackOffset}px)`}>
-    {#each loopCells as cell, i (i)}
+    {#each loopCells.slice(0, renderedCount) as cell, i (`${Math.floor(i / segmentCount)}-${cell.id}`)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class='film-cell'
@@ -236,6 +253,7 @@
     flex-direction: row;
     height: 100%;
     will-change: transform;
+    contain: layout style;
   }
 
   .film-cell {
@@ -250,6 +268,7 @@
     width: var(--cell);
     height: var(--cell);
     padding: var(--sprock-p) 0;
+    contain: layout style paint;
   }
   .film-cell:focus-visible { outline: 2px solid rgba(255,64,0,0.6); outline-offset: -2px; }
 

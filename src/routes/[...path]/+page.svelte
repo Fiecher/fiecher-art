@@ -5,15 +5,22 @@
   import Reel from '$lib/components/Reel.svelte'
   import Works from '$lib/components/Works.svelte'
   import { activeSection, goToSection, initNavigation } from '$lib/navigation'
-  import { onDestroy, onMount } from 'svelte'
+  import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
   let unsubscribe: (() => void) | null = null
   onMount(() => {
     unsubscribe = initNavigation()
-  })
-  onDestroy(() => {
-    unsubscribe?.()
+
+    const handler = () => {
+      reelReady = true
+    }
+    window.addEventListener('app:loaded', handler, { once: true })
+
+    return () => {
+      unsubscribe?.()
+      window.removeEventListener('app:loaded', handler)
+    }
   })
 
   const isContact = $derived($activeSection === 'CONTACT')
@@ -33,14 +40,6 @@
   })
 
   let reelReady = $state(false)
-
-  onMount(() => {
-    const handler = () => {
-      reelReady = true
-    }
-    window.addEventListener('app:loaded', handler, { once: true })
-    return () => window.removeEventListener('app:loaded', handler)
-  })
 </script>
 
 <div class='page-shell'>

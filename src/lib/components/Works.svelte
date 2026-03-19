@@ -207,6 +207,17 @@
 
   let mounted = $state(false)
   let _prevVisible = false
+  let _readyCount = 0
+
+  function onReelReady() {
+    _readyCount++
+    if (_readyCount >= 2) {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('works:ready'))
+      })
+    }
+  }
+
   $effect(() => {
     const v = visible
     if (!mounted)
@@ -230,7 +241,6 @@
     requestAnimationFrame(() => {
       if (stageEl)
         ro.observe(stageEl)
-      requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('works:ready')))
     })
     return () => {
       ro.disconnect()
@@ -264,6 +274,7 @@
         {entryDelay}
         {visible}
         onCellClick={handleCellClick}
+        onReady={onReelReady}
       />
     </div>
     <div class='strip-slot' style={`height:${stripH}px`}>
@@ -276,6 +287,7 @@
         {entryDelay}
         {visible}
         onCellClick={handleCellClick}
+        onReady={onReelReady}
       />
     </div>
   </div>

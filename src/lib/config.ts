@@ -136,5 +136,4 @@ export const WORKS: Work[] = [
   },
 ]
 
-const MAIN_PER_SECTION = 4
-export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / MAIN_PER_SECTION))
+export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / 4))

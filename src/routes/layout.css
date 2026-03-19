@@ -17,7 +17,6 @@ body {
 @media (max-width: 768px) {
   .workspace-wrapper { padding-inline: 16px; }
   .footer-wrapper { padding-inline: 16px; }
-  .works-title { font-size: 3rem; }
 }
 .page-shell {
   display: flex;

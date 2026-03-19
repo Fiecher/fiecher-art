@@ -16,18 +16,20 @@
   const REEL_URL = withBase('/reel/reel.mp4')
 
   let progress = $state(0)
+  let _progressRafId = 0
 
   function setProgress(target: number) {
     target = Math.max(progress, Math.min(target, 1))
+    cancelAnimationFrame(_progressRafId)
     const step = () => {
       progress += (target - progress) * 0.25
       if (Math.abs(target - progress) > 0.002) {
-        requestAnimationFrame(step)
+        _progressRafId = requestAnimationFrame(step)
       } else {
         progress = target
       }
     }
-    step()
+    _progressRafId = requestAnimationFrame(step)
   }
 
   onMount(() => {
@@ -52,7 +54,13 @@
       finished = true
       setProgress(1)
       await tick()
-      setTimeout(() => onDone(), 250)
+      // Two rAFs: let the browser paint the progress bar at 100%,
+      // then one more frame for compositing before revealing the app.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          setTimeout(() => onDone(), 100),
+        ),
+      )
     }
 
     function check() {
@@ -169,12 +177,14 @@
       check()
     }, { once: true })
 
+    // Safety fallback: if Works never mounts (e.g. hidden behind SSR flag),
+    // unblock after 3s instead of 500ms to give ResizeObserver time to fire.
     setTimeout(() => {
       if (!worksOk) {
         worksOk = true
         check()
       }
-    }, 500)
+    }, 3_000)
 
     setTimeout(() => finish(), 15_000)
   })

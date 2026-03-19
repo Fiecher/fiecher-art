@@ -69,7 +69,7 @@ export function progressToTarget(progress: number): { section: Section, pageInde
   return { section: 'WORKS', pageIndex: Math.min(step - 1, WORK_PAGE_COUNT - 1) }
 }
 
-let _ownNav = false
+let _ownNavCount = 0
 let transitionTimer = 0
 
 export async function goToSection(target: Section, pageIndex?: number | null) {
@@ -84,7 +84,7 @@ export async function goToSection(target: Section, pageIndex?: number | null) {
   isTransitioning.set(true)
   transitionTimer = window.setTimeout(() => isTransitioning.set(false), 600)
 
-  _ownNav = true
+  _ownNavCount++
   await goto(buildPath(target), { noScroll: true, keepFocus: true })
 }
 
@@ -94,12 +94,12 @@ export async function goToWork(workId: string) {
   activeSection.set('WORKS')
   isTransitioning.set(true)
   transitionTimer = window.setTimeout(() => isTransitioning.set(false), 600)
-  _ownNav = true
+  _ownNavCount++
   await goto(buildWorkPath(workId), { noScroll: true, keepFocus: true })
 }
 
 export async function closeWorkUrl() {
-  _ownNav = true
+  _ownNavCount++
   await goto(buildPath('WORKS'), { noScroll: true, keepFocus: true, replaceState: true })
 }
 
@@ -128,13 +128,13 @@ function applyUrl(pathname: string) {
   const { section, workId } = parsePath(pathname)
 
   if (section === null) {
-    _ownNav = true
+    _ownNavCount++
     goto(buildPath('REEL'), { noScroll: true, replaceState: true })
     return
   }
 
   if (section === 'WORKS' && workId && !WORKS.find(w => w.id === workId)) {
-    _ownNav = true
+    _ownNavCount++
     goto(buildPath('REEL'), { noScroll: true, replaceState: true })
     return
   }
@@ -152,8 +152,8 @@ function applyUrl(pathname: string) {
 export function initNavigation() {
   applyUrl(window.location.pathname)
   const cleanup = afterNavigate(({ type, to }) => {
-    if (_ownNav) {
-      _ownNav = false
+    if (_ownNavCount > 0) {
+      _ownNavCount--
       return
     }
     if (type === 'popstate' && to?.url)
