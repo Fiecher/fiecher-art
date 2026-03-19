@@ -15,8 +15,6 @@
     window.dispatchEvent(new CustomEvent('app:loaded'))
   }
 
-  // ─── Scrollbar: 3 equal sections ──────────────────────────────────
-  // REEL=step0  WORKS=step1  CONTACT=step2
   const STEP_PX = 500
   const TOTAL_STEPS = SECTIONS.length - 1 // = 2
 
@@ -198,6 +196,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow: hidden;
   }
   .poster-paper {
     position: absolute;

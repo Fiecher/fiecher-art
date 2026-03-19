@@ -33,6 +33,8 @@
   let topScrollX = $state(0)
   const botScrollX = $derived(-topScrollX)
 
+  let cellSize = $state(0)
+
   let isDragging = $state(false)
   let dragDistPx = 0
   let dragStartX = 0
@@ -143,8 +145,6 @@
   let touchDragStartTopX = 0
   let touchIsHorizontal: boolean | null = null
 
-  let cellSize = $state(0)
-
   function onTouchStart(e: TouchEvent) {
     cancelAnimationFrame(animRafId)
     const t = e.touches[0]
@@ -184,7 +184,6 @@
   function onTouchEnd(e: TouchEvent) {
     const elapsed = Date.now() - touchOriginT
     const ch = e.changedTouches[0]
-    const dx = touchOriginX - ch.clientX
     const dy = touchOriginY - ch.clientY
 
     if (touchIsHorizontal === false && Math.abs(dy) >= 45 && elapsed < 600) {
@@ -311,7 +310,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: 0px;
   }
 
   .strip-slot {

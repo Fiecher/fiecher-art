@@ -188,23 +188,23 @@
       0px 2px 4px rgba(0, 0, 0, 0.28);
   }
 
-  .menu-text::before,
+  .menu-text::before { display: none; }
+
   .menu-text::after {
     content: '';
     position: absolute;
     bottom: 2px;
+    left: 0;
+    width: 100%;
     height: 0.25rem;
     background-color: var(--color-secondary);
-    width: 50%;
     transform: scaleX(0);
+    transform-origin: center bottom;
     transition: transform 0.15s ease-in-out;
   }
 
-  .menu-text::before { right: 50%; transform-origin: right bottom; }
-  .menu-text::after  { left: 50%;  transform-origin: left bottom; }
-
-  .menu-text:hover::before, .menu-text:hover::after,
-  .menu-text--active::before, .menu-text--active::after { transform: scaleX(1); }
+  .menu-text:hover::after,
+  .menu-text--active::after { transform: scaleX(1); }
 
   .menu-text:hover { transform: scale(1.05); }
 

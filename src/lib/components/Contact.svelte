@@ -1,6 +1,5 @@
 <script lang='ts'>
   import APP_CONFIG from '$lib/config'
-  import { fade } from 'svelte/transition'
 
   const CREDITS: { role: string, name: string, href?: string }[] = [
     { role: 'contact via', name: 'Mail', href: APP_CONFIG.social.email },
@@ -11,11 +10,7 @@
     { role: '', name: 'TG Channel', href: APP_CONFIG.social.telegramChannel },
   ]
 </script>
-<div
-  class='credits'
-  in:fade={{ duration: 250, delay: 350 }}
-  out:fade={{ duration: 150 }}
->
+<div class='credits'>
   {#each CREDITS as { role, name, href }}
     <span class='credits-role' aria-hidden={role === '' ? 'true' : undefined}>{role}</span>
     {#if href}
@@ -33,20 +28,14 @@
 </div>
 <style>
   .credits {
-    margin: 10px auto;
-    padding: 0 clamp(1rem, 0.673rem + 1.454vw, 3rem);
-    box-sizing: border-box;
-    display: inline-grid;
+    display: grid;
     grid-template-columns: max-content max-content;
     column-gap: clamp(0.75rem, 0.611rem + 0.618vw, 1.6rem);
     align-items: baseline;
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
   }
   .credits-role {
     font-family: var(--font-secondary);
-    font-size: clamp(1.1rem, 0.909rem + 0.432vw, 1.6rem);
+    font-size: clamp(1.4rem, 1.0rem + 0.8vw, 2.2rem);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-secondary);
@@ -57,7 +46,7 @@
   }
   .credits-name {
     font-family: var(--font-secondary);
-    font-size: clamp(1.5rem, 1.182rem + 0.636vw, 2.2rem);
+    font-size: clamp(2rem, 1.4rem + 1.2vw, 3.5rem);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;

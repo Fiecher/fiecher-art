@@ -78,15 +78,31 @@
         </main>
       </div>
     </div>
-    <div class='footer-wrapper' class:footer-wrapper--info={isContact}>
+    <div
+      class='contact-wrapper'
+      class:contact-wrapper--expanded={isContact}
+      aria-hidden={!isContact}
+    >
+      <div class='contact-frame'>
+        <div
+          class='contact-inner'
+          class:contact-inner--visible={isContact}
+        >
+          <Contact />
+        </div>
+      </div>
+    </div>
+
+    <div class='footer-wrapper'>
       {#if isContact}
-        <Contact />
+        <div class='footer-spacer' aria-hidden='true'></div>
       {:else}
         <div in:fade={{ duration: 200 }}>
           <Footer onContactOpen={() => goToSection('CONTACT')} />
         </div>
       {/if}
     </div>
+
   </div>
 </div>
 
@@ -98,6 +114,7 @@
     overflow: hidden;
     min-height: 0;
   }
+
   .workspace-wrapper {
     flex: 1;
     display: flex;
@@ -165,8 +182,52 @@
     visibility: hidden;
     pointer-events: none;
   }
+
+  .contact-wrapper {
+    flex: 0;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 20px;
+    pointer-events: none;
+    transition:
+      flex 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+      padding 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .contact-wrapper--expanded {
+    flex: 1;
+    padding: 20px;
+    pointer-events: auto;
+  }
+  .contact-frame {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+  }
+  .contact-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .contact-inner--visible {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0.35s;
+  }
+
   .footer-wrapper {
     flex-shrink: 0;
     padding: 0 20px 20px 20px;
+  }
+  .footer-spacer {
+    visibility: hidden;
+    height: 4.5rem;
   }
 </style>
