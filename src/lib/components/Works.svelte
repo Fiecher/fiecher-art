@@ -38,8 +38,6 @@
     reelBot?.setScrollX(-x)
   }
 
-  let cellSize = $state(0)
-
   let isDragging = $state(false)
   let dragDistPx = 0
   let dragStartX = 0
@@ -56,8 +54,9 @@
   }
 
   function maybeSnap() {
-    if (cellSize <= 0)
-      return
+    const approxCellSize = stageH > 0 ?
+      Math.max(120, Math.min(560, Math.round(stageEl ? (stageEl.offsetWidth * 0.38) : 220))) :
+        220
 
     const speed = Math.abs(velX)
     const FLING_THRESHOLD = 0.4
@@ -77,7 +76,7 @@
       }
       animRafId = requestAnimationFrame(tick)
     } else {
-      const target = Math.round(topScrollX / cellSize) * cellSize
+      const target = Math.round(topScrollX / approxCellSize) * approxCellSize
       if (Math.abs(target - topScrollX) < 2)
         return
       cancelAnimationFrame(animRafId)
@@ -92,6 +91,11 @@
       }
       animRafId = requestAnimationFrame(tick)
     }
+  }
+
+  function syncDragDist() {
+    reelTop?.setDragDist(dragDistPx)
+    reelBot?.setDragDist(dragDistPx)
   }
 
   function onMouseDown(e: MouseEvent) {
@@ -118,6 +122,7 @@
     lastClientX = e.clientX
     lastClientT = now
     dragDistPx = Math.abs(e.clientX - dragStartX)
+    syncDragDist()
     pendingX = e.clientX
     if (dragRafId)
       return
@@ -141,6 +146,7 @@
     }
     pendingX = null
     isDragging = false
+    syncDragDist()
     maybeSnap()
   }
 
@@ -182,6 +188,7 @@
       lastClientX = t.clientX
       lastClientT = now
       dragDistPx = Math.abs(dx)
+      syncDragDist()
       applyScroll(touchDragStartTopX - dx)
     }
   }
@@ -198,6 +205,7 @@
     }
 
     if (touchIsHorizontal === true) {
+      syncDragDist()
       maybeSnap()
     }
   }
@@ -240,7 +248,6 @@
       if (!rect || rect.width <= 0 || rect.height <= 0)
         return
       stageH = rect.height
-      cellSize = Math.max(120, Math.min(560, Math.round(rect.width * 0.38)))
     })
     mounted = true
     requestAnimationFrame(() => {
@@ -277,6 +284,7 @@
         entryX={-600}
         {entryDelay}
         {visible}
+        {overlay}
         onCellClick={handleCellClick}
         onReady={onReelReady}
       />
@@ -289,14 +297,12 @@
         entryX={600}
         {entryDelay}
         {visible}
+        {overlay}
         onCellClick={handleCellClick}
         onReady={onReelReady}
       />
     </div>
   </div>
-
-  <div class='edge-fade edge-fade--left' aria-hidden='true'></div>
-  <div class='edge-fade edge-fade--right' aria-hidden='true'></div>
 </div>
 
 <style>
@@ -334,28 +340,6 @@
     width: 100%;
     flex-shrink: 0;
     overflow: visible;
-  }
-
-  .edge-fade {
-    position: absolute;
-    top: 0; bottom: 0;
-    width: clamp(20px, 5vw, 72px);
-    pointer-events: none;
-    z-index: 10;
-  }
-  .edge-fade--left {
-    left: 0;
-    background: linear-gradient(to right, var(--color-secondary), transparent);
-  }
-  .edge-fade--right {
-    right: 0;
-    background: linear-gradient(to left, var(--color-secondary), transparent);
-  }
-  .works--overlay .edge-fade--left {
-    background: linear-gradient(to right, var(--color-primary), transparent);
-  }
-  .works--overlay .edge-fade--right {
-    background: linear-gradient(to left, var(--color-primary), transparent);
   }
 
   @media (max-width: 480px) { .strips-stage { gap: 4px; } }
