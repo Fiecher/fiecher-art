@@ -12,6 +12,7 @@
       .filter((src, i, arr) => arr.indexOf(src) === i)
       .map(withBase),
   ]
+  const CELL_SIZE = 220
 
   const REEL_URL = withBase('/reel/reel.mp4')
 
@@ -54,8 +55,6 @@
       finished = true
       setProgress(1)
       await tick()
-      // Two rAFs: let the browser paint the progress bar at 100%,
-      // then one more frame for compositing before revealing the app.
       requestAnimationFrame(() =>
         requestAnimationFrame(() =>
           setTimeout(() => onDone(), 100),
@@ -86,20 +85,33 @@
     if (total === 0) {
       assetsOk = true
     } else {
-      const cache = document.createElement('div')
-      cache.setAttribute('aria-hidden', 'true')
-      cache.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;left:-9999px;top:-9999px'
-      document.body.appendChild(cache)
+      const preRender = document.createElement('div')
+      preRender.setAttribute('aria-hidden', 'true')
+      preRender.style.cssText = [
+        'position:fixed',
+        `width:${CELL_SIZE}px`,
+        `height:${CELL_SIZE}px`,
+        'opacity:0.001',
+        'pointer-events:none',
+        'overflow:hidden',
+        'left:-9999px',
+        'top:-9999px',
+        'contain:strict',
+      ].join(';')
+      document.body.appendChild(preRender)
 
       Promise.all(
         IMAGE_URLS.map((src) =>
           new Promise<void>(resolve => {
             const img = new Image()
+            img.width = CELL_SIZE
+            img.height = CELL_SIZE
+            img.style.cssText = `width:${CELL_SIZE}px;height:${CELL_SIZE}px;object-fit:cover;display:block`
             const timer = window.setTimeout(resolve, 10_000)
             img.onload = () => {
               img.decode?.().catch(() => {}).finally(() => {
                 clearTimeout(timer)
-                cache.appendChild(img)
+                preRender.appendChild(img)
                 loaded++
                 setProgress(0.1 + (loaded / total) * 0.3)
                 resolve()
@@ -177,8 +189,6 @@
       check()
     }, { once: true })
 
-    // Safety fallback: if Works never mounts (e.g. hidden behind SSR flag),
-    // unblock after 3s instead of 500ms to give ResizeObserver time to fire.
     setTimeout(() => {
       if (!worksOk) {
         worksOk = true

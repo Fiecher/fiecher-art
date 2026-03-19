@@ -120,6 +120,7 @@
   })
 
   const sprockVars = $derived(filmMetrics.cssVars)
+
   let renderedCount = $state(0)
   const BATCH = 8
   let _batchRafId = 0
@@ -217,7 +218,7 @@
             {#if cell.image}
               <div class='img-wrap'>
                 {cell.title ?? ''}
-                <img src={cell.image} alt='' draggable='false' loading='lazy' decoding='async' />
+                <img src={cell.image} alt='' draggable='false' loading='eager' decoding='async' />
               </div>
             {:else}
               <div class='frame-placeholder'></div>
