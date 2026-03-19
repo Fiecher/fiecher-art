@@ -15,8 +15,38 @@
     window.dispatchEvent(new CustomEvent('app:loaded'))
   }
 
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        loaded = false
+        window.dispatchEvent(new CustomEvent('app:reload'))
+      }
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible')
+        return
+      if (!loaded)
+        return
+      const vid = document.querySelector<HTMLVideoElement>('video.reel-video')
+      if (vid && vid.readyState === 0 && !vid.src.endsWith('#')) {
+        loaded = false
+        window.dispatchEvent(new CustomEvent('app:reload'))
+      }
+    }
+
+    window.addEventListener('pageshow', onPageShow)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pageshow', onPageShow)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  })
+
   const STEP_PX = 500
-  const TOTAL_STEPS = SECTIONS.length - 1 // = 2
+  const TOTAL_STEPS = SECTIONS.length - 1
 
   let scrollEl = $state<HTMLElement | undefined>()
 

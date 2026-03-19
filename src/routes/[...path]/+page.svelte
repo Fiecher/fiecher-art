@@ -16,10 +16,16 @@
       reelReady = true
     }
     window.addEventListener('app:loaded', handler, { once: true })
+    const onReload = () => {
+      reelReady = false
+      window.addEventListener('app:loaded', handler, { once: true })
+    }
+    window.addEventListener('app:reload', onReload)
 
     return () => {
       unsubscribe?.()
       window.removeEventListener('app:loaded', handler)
+      window.removeEventListener('app:reload', onReload)
     }
   })
 

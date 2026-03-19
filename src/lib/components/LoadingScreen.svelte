@@ -259,15 +259,9 @@
 .bar-fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(223,225,215,0.25),
-    var(--color-secondary),
-    rgba(223,225,215,0.25)
-  );
+  background: var(--color-secondary);
   transform: scaleX(0);
   transform-origin: left center;
   will-change: transform;
-  box-shadow: 0 0 8px rgba(223,225,215,0.25);
 }
 </style>

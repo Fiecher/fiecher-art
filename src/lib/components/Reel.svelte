@@ -24,17 +24,29 @@
       else videoEl.pause()
     }
   })
+  let lastVolume = 1
 
   function toggleMute() {
     if (!videoEl)
       return
-    muted = !muted
-    videoEl.muted = muted
+    if (!muted) {
+      muted = true
+      videoEl.muted = true
+    } else {
+      if (volume === 0) {
+        volume = lastVolume
+        videoEl.volume = lastVolume
+      }
+      muted = false
+      videoEl.muted = false
+    }
   }
 
   function onVolumeInput(e: Event) {
     const val = Number.parseFloat((e.target as HTMLInputElement).value)
     volume = val
+    if (val > 0)
+      lastVolume = val
     if (!videoEl)
       return
     videoEl.volume = val
@@ -378,7 +390,7 @@
     background: var(--color-secondary);
     border: none;
     cursor: pointer;
-    transition: box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
   }
   .vol-slider:hover::-webkit-slider-thumb,
   .vol-slider:focus::-webkit-slider-thumb {
@@ -386,9 +398,6 @@
     transform: scale(1.2);
   }
   .vol-slider::-webkit-slider-runnable-track { background: transparent; }
-  .vol-panel--muted .vol-slider::-webkit-slider-thumb {
-    opacity: 0.25;
-  }
 
   .vol-slider::-moz-range-thumb {
     width: 11px;
@@ -397,17 +406,22 @@
     background: var(--color-secondary);
     border: none;
     cursor: pointer;
-    transition: box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
   }
   .vol-slider:hover::-moz-range-thumb,
   .vol-slider:focus::-moz-range-thumb {
     box-shadow: 0 0 0 3px rgba(223,225,215,0.2);
     transform: scale(1.2);
   }
-  .vol-panel--muted .vol-slider::-moz-range-thumb {
-    opacity: 0.25;
-  }
   .vol-slider::-moz-range-track { background: transparent; }
+
+  .vol-panel--muted {
+    opacity: 0.3;
+    transition: opacity 0.15s ease;
+  }
+  .vol-panel {
+    transition: opacity 0.15s ease;
+  }
 
   @media (hover: none) {
     .vol-btn {
