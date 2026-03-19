@@ -42,10 +42,14 @@
     trackEl.style.transform = `translateX(${offset}px)`
   }
 
-  let slideX = $state(entryX !== 0 ? 9999 : 0)
-  let slideOpa = $state(entryX !== 0 ? 0 : 1)
-  let isEntering = $state(false)
   let _entranceRaf = 0
+
+  function applySlide(x: number, opa: number) {
+    if (!stripEl)
+      return
+    stripEl.style.transform = `translateY(-50%) rotate(${tilt}deg) translateX(${x}px)`
+    stripEl.style.opacity = String(opa)
+  }
 
   function easeOut3(t: number) {
     return 1 - (1 - t) ** 3
@@ -61,21 +65,16 @@
     cancelAnimationFrame(_entranceRaf)
     const run = () => {
       const startX = Math.sign(entryX) * window.innerWidth * 0.75
-      slideX = startX
-      slideOpa = 0
-      isEntering = true
+      applySlide(startX, 0)
       const DURATION = 1100
       const startTime = performance.now()
       const tick = (now: number) => {
         const t = Math.min((now - startTime) / DURATION, 1)
-        slideX = startX * (1 - easeOvershoot(t))
-        slideOpa = Math.min(1, easeOut3(t * 1.5))
+        applySlide(startX * (1 - easeOvershoot(t)), Math.min(1, easeOut3(t * 1.5)))
         if (t < 1) {
           _entranceRaf = requestAnimationFrame(tick)
         } else {
-          slideX = 0
-          slideOpa = 1
-          isEntering = false
+          applySlide(0, 1)
         }
       }
       _entranceRaf = requestAnimationFrame(tick)
@@ -142,7 +141,7 @@
     _batchRafId = requestAnimationFrame(scheduleNext)
   })
 
-  const sheenEls = $state<(HTMLElement | null)[]>([])
+  let sheenEls: (HTMLElement | null)[] = []
   let pressedIdx = $state<number | null>(null)
 
   function triggerSheen(idx: number) {
@@ -170,6 +169,10 @@
   }
 
   onMount(() => {
+    if (stripEl && entryX !== 0) {
+      stripEl.style.opacity = '0'
+    }
+
     let resizeTimer = 0
     const ro = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width
@@ -194,9 +197,8 @@
 
 <div
   class='film-strip'
-  class:film-strip--entering={isEntering}
   bind:this={stripEl}
-  style={`--tilt:${tilt}deg; --slide-x:${slideX}px; --cell:${cellSize}px; opacity:${slideOpa}; ${sprockVars}`}
+  style={`--tilt:${tilt}deg; --cell:${cellSize}px; ${sprockVars}`}
 >
   <div class='strip-track' bind:this={trackEl} style={`transform: translateX(${trackOffset}px)`}>
     {#each loopCells.slice(0, renderedCount) as cell, i (`${Math.floor(i / segmentCount)}-${cell.id}`)}
@@ -218,7 +220,13 @@
             {#if cell.image}
               <div class='img-wrap'>
                 {cell.title ?? ''}
-                <img src={cell.image} alt='' draggable='false' loading='eager' decoding='async' />
+                <img
+                  src={cell.image}
+                  alt=''
+                  draggable='false'
+                  loading={i >= segmentCount && i < segmentCount * 2 ? 'eager' : 'lazy'}
+                  decoding='async'
+                />
               </div>
             {:else}
               <div class='frame-placeholder'></div>
@@ -242,11 +250,11 @@
     left: 0; right: 0;
     top: 50%;
     height: var(--cell);
-    transform: translateY(-50%) rotate(var(--tilt, 0deg)) translateX(var(--slide-x, 0px));
+    transform: translateY(-50%) rotate(var(--tilt, 0deg)) translateX(0px);
+    opacity: 1;
     background: var(--color-primary);
     overflow: hidden;
   }
-  .film-strip--entering { transition: none; }
 
   .strip-track {
     display: flex;
