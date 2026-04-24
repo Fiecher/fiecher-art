@@ -5,7 +5,6 @@
     { role: 'contact via', name: 'Mail', href: APP_CONFIG.social.email },
     { role: '', name: 'Telegram', href: APP_CONFIG.social.telegram },
     { role: 'follow on', name: 'ArtStation', href: APP_CONFIG.social.artstation },
-    { role: '', name: 'Behance', href: APP_CONFIG.social.behance },
     { role: '', name: 'YouTube', href: APP_CONFIG.social.youtube },
     { role: '', name: 'TG Channel', href: APP_CONFIG.social.telegramChannel },
   ]

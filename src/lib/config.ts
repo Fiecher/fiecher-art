@@ -19,7 +19,6 @@ export const APP_CONFIG = {
     youtube: 'https://youtube.com/@insomniaCR',
     artstation: 'https://artstation.com/fiecher',
     telegramChannel: 'https://t.me/fiecherWorks',
-    behance: 'https://behance.net/fiecher',
   },
 } as const
 
