@@ -133,6 +133,15 @@ export const WORKS: Work[] = [
       src: '/works/revolution-br/NoSignal.jpg',
     }],
   },
+  {
+    id: 'commander-tartar',
+    title: 'Commander Tartar',
+    year: 2026,
+    main: {
+      type: 'image',
+      src: '/works/commander-tartar/Preview.png',
+    },
+  },
 ]
 
 export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / 4))

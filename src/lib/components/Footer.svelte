@@ -30,9 +30,9 @@
   </span>
   <span class='footer-line'>
     <span class='footer-small'>follow author's</span>
-    <span class='footer-large'>ArtStation,</span>
-    <span class='footer-large'>Telegram Channel</span>
+    <span class='footer-large'>ArtStation</span>
     <span class='footer-small'>&</span>
+    <span class='footer-large'>Telegram Channel</span>
   </span>
   <span class='footer-sep'>·</span>
   <span class='footer-line'>
