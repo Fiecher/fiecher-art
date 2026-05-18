@@ -39,6 +39,22 @@ export default APP_CONFIG
 
 export const WORKS: Work[] = [
   {
+    id: 'deadlock-doorman',
+    title: 'Doorman form Deadlock',
+    year: 2026,
+    main: {
+      type: 'image',
+      src: '/works/deadlock-doorman/Doorman.jpg',
+    },
+    wip: [{
+      type: 'image',
+      src: '/works/deadlock-doorman/WIP1.jpg',
+    }, {
+      type: 'image',
+      src: '/works/deadlock-doorman/WIP2.jpg',
+    }],
+  },
+  {
     id: 'symptom-disturbia',
     title: 'Disturbia',
     year: 2026,
