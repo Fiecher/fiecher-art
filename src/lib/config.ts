@@ -45,7 +45,7 @@ export const WORKS: Work[] = [
     main: {
       type: 'image',
       src: '/works/deadlock-doorman/Render.jpg',
-      poster: '/works/deadlock-doorman/Render.jpg',
+      poster: '/works/deadlock-doorman/Preview.jpg',
     },
     wip: [{
       type: 'image',
