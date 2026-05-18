@@ -40,11 +40,11 @@ export default APP_CONFIG
 export const WORKS: Work[] = [
   {
     id: 'deadlock-doorman',
-    title: 'Doorman form Deadlock',
+    title: 'Doorman from Deadlock',
     year: 2026,
     main: {
       type: 'image',
-      src: '/works/deadlock-doorman/Doorman.jpg',
+      src: '/works/deadlock-doorman/Preview.jpg',
     },
     wip: [{
       type: 'image',
@@ -160,7 +160,7 @@ export const WORKS: Work[] = [
   },
   {
     id: 'control-casper_darling',
-    title: 'Casper Darling from Control',
+    title: 'Casper Darling',
     year: 2026,
     main: {
       type: 'image',
