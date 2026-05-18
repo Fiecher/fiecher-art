@@ -158,6 +158,22 @@ export const WORKS: Work[] = [
       src: '/works/commander-tartar/Preview.png',
     },
   },
+  {
+    id: 'control-casper_darling',
+    title: 'Casper Darling from Control',
+    year: 2026,
+    main: {
+      type: 'image',
+      src: '/works/control-casper_darling/Preview.jpg',
+    },
+    wip: [{
+      type: 'image',
+      src: '/works/control-casper_darling/WIP1.jpg',
+    }, {
+      type: 'image',
+      src: '/works/control-casper_darling/WIP2.jpg',
+    }],
+  },
 ]
 
 export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / 4))
