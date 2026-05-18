@@ -44,7 +44,8 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'image',
-      src: '/works/deadlock-doorman/Preview.jpg',
+      src: '/works/deadlock-doorman/Render.jpg',
+      poster: '/works/deadlock-doorman/Render.jpg',
     },
     wip: [{
       type: 'image',
