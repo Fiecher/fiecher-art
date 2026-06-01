@@ -97,7 +97,7 @@ export const WORKS: Work[] = [
   },
   {
     id: 'takin-whats-not-yours',
-    title: 'Takin What’s Not Yours',
+    title: 'Taking What\'s Not Yours',
     year: 2026,
     main: {
       type: 'video',
