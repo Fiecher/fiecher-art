@@ -45,15 +45,18 @@ export const WORKS: Work[] = [
     main: {
       type: 'image',
       src: '/works/deadlock-doorman/Render.jpg',
-      poster: '/works/deadlock-doorman/Render.jpg',
+      poster: '/works/deadlock-doorman/Preview.jpg',
     },
-    wip: [{
-      type: 'image',
-      src: '/works/deadlock-doorman/WIP1.jpg',
-    }, {
-      type: 'image',
-      src: '/works/deadlock-doorman/WIP2.jpg',
-    }],
+    wip: [
+      {
+        type: 'image',
+        src: '/works/deadlock-doorman/WIP1.jpg',
+      },
+      {
+        type: 'image',
+        src: '/works/deadlock-doorman/WIP2.jpg',
+      },
+    ],
   },
   {
     id: 'symptom-disturbia',
@@ -91,6 +94,16 @@ export const WORKS: Work[] = [
       type: 'image',
       src: '/works/symptom-bulletin/model-viewport.jpg',
     }],
+  },
+  {
+    id: 'takin-whats-not-yours',
+    title: 'Takin What’s Not Yours',
+    year: 2026,
+    main: {
+      type: 'video',
+      src: '/works/tv/Render.mp4',
+      poster: '/works/tv/Preview.jpg',
+    },
   },
   {
     id: 'soft-studio',
