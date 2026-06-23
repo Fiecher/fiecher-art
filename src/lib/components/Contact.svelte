@@ -54,7 +54,9 @@
     }
     const box = creditsEl.closest('.contact-frame') as HTMLElement | null
     const ro = new ResizeObserver(schedule)
-    ro.observe(box ?? creditsEl)
+    if (box)
+      ro.observe(box)
+    ro.observe(creditsEl)
     window.addEventListener('resize', schedule)
     document.fonts?.ready.then(schedule).catch(() => {})
     schedule()
@@ -66,10 +68,10 @@
   })
 </script>
 
-{#snippet creditRow(c: Credit, animate: boolean)}
-  <span class='credits-role' class:credits-in={animate} aria-hidden={c.role === '' ? 'true' : undefined}>{c.role}</span>
+{#snippet creditRow(c: Credit)}
+  <span class='credits-role' aria-hidden={c.role === '' ? 'true' : undefined}>{c.role}</span>
   {#if c.href}
-    <a class='credits-name credits-link' class:credits-in={animate} href={c.href} target='_blank' rel='noopener noreferrer' aria-label='{c.name}, opens in new tab'>
+    <a class='credits-name credits-link' href={c.href} target='_blank' rel='noopener noreferrer' aria-label='{c.name}, opens in new tab'>
       {c.name}
       <svg class='credits-arrow' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'>
         <line x1='1' y1='9' x2='9' y2='1' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
@@ -77,7 +79,7 @@
       </svg>
     </a>
   {:else}
-    <span class='credits-name' class:credits-in={animate}>{c.name}</span>
+    <span class='credits-name'>{c.name}</span>
   {/if}
 {/snippet}
 
@@ -87,8 +89,16 @@
   style:transform={`scale(${scale})`}
 >
   {#each PRIMARY as c}
-    {@render creditRow(c, false)}
+    {@render creditRow(c)}
   {/each}
+
+  <div class='extra-reveal' class:extra-reveal--open={expanded}>
+    <div class='extra-grid' aria-hidden={expanded ? undefined : 'true'}>
+      {#each EXTRA as c}
+        {@render creditRow(c)}
+      {/each}
+    </div>
+  </div>
 
   <span class='credits-role' aria-hidden='true'></span>
   <button
@@ -102,12 +112,6 @@
       <polyline points='1,1 5,5 9,1' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' />
     </svg>
   </button>
-
-  {#if expanded}
-    {#each EXTRA as c}
-      {@render creditRow(c, true)}
-    {/each}
-  {/if}
 </div>
 
 <style>
@@ -117,7 +121,6 @@
     column-gap: clamp(0.75rem, 0.611rem + 0.618vw, 1.6rem);
     align-items: baseline;
     transform-origin: center center;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
   .credits-role {
@@ -194,26 +197,36 @@
     transform: rotate(180deg);
   }
 
-  .credits-in {
-    animation: credit-in 0.28s ease both;
+  .extra-reveal {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  @keyframes credit-in {
-    from {
-      opacity: 0;
-      transform: translateY(-0.25em);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .extra-reveal--open {
+    grid-template-rows: 1fr;
+  }
+  .extra-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+    overflow: hidden;
+    min-height: 0;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+  .extra-reveal--open .extra-grid {
+    opacity: 1;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .credits,
     .other-caret,
-    .credits-in {
+    .extra-reveal,
+    .extra-grid {
       transition: none;
-      animation: none;
     }
   }
 </style>
