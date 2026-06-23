@@ -4,6 +4,7 @@
   --color-accent: rgba(255, 64, 0, 1);
   --font-main: 'Bebas Neue', sans-serif;
   --font-secondary: 'Trade Gothic LT Std', Arial, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 html, body {
   height: 100%;

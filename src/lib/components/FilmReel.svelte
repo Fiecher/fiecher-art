@@ -36,7 +36,7 @@
   let hoverIdx = -1
   let pressIdx = -1
   let sheenIdx = -1
-  let sheenT = 0 // 0..1
+  let sheenT = 0
   let sheenRafId = 0
   let entranceRafId = 0
   let rafId = 0
@@ -126,6 +126,23 @@
       ctx.quadraticCurveTo(x, y, x + r, y)
       ctx.closePath()
     }
+  }
+
+  function wrapToWidth(ctx: CanvasRenderingContext2D, words: string[], maxW: number): string[] {
+    const lines: string[] = []
+    let cur = ''
+    for (const w of words) {
+      const test = cur ? `${cur} ${w}` : w
+      if (cur && ctx.measureText(test).width > maxW) {
+        lines.push(cur)
+        cur = w
+      } else {
+        cur = test
+      }
+    }
+    if (cur)
+      lines.push(cur)
+    return lines
   }
 
   function draw() {
@@ -226,13 +243,39 @@
       if (isHov && cell.title) {
         ctx.fillStyle = 'rgba(11,10,9,0.65)'
         ctx.fillRect(fx, fy, fw, fh)
-        const fs = Math.max(12, Math.round(1.2 * 16 * m.r))
+
+        let fs = Math.max(12, Math.round(1.2 * 16 * m.r))
         ctx.fillStyle = '#dfe1d7'
-        ctx.font = `${fs}px "Bebas Neue",sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.letterSpacing = `${(fs * 0.1).toFixed(1)}px`
-        ctx.fillText(cell.title.toUpperCase(), fx + fw / 2, fy + fh / 2)
+        const setHoverFont = (size: number) => {
+          ctx.font = `${size}px "Bebas Neue",sans-serif`
+          ctx.letterSpacing = `${(size * 0.1).toFixed(1)}px`
+        }
+        setHoverFont(fs)
+
+        const words = cell.title.toUpperCase().split(/\s+/).filter(Boolean)
+        let lh = fs * 1.05
+        const singleW = ctx.measureText(words.join(' ')).width
+        const lineCount = Math.max(1, Math.round(Math.sqrt(singleW / Math.max(lh, 1))))
+        const targetW = Math.min(fw * 0.86, singleW / lineCount)
+        const lines = wrapToWidth(ctx, words, targetW)
+
+        let widest = 0
+        for (const ln of lines)
+          widest = Math.max(widest, ctx.measureText(ln).width)
+        let totalH = lines.length * lh
+        const fit = Math.min(1, (fw * 0.9) / Math.max(widest, 1), (fh * 0.9) / Math.max(totalH, 1))
+        if (fit < 1) {
+          fs = Math.max(9, fs * fit)
+          setHoverFont(fs)
+          lh = fs * 1.05
+          totalH = lines.length * lh
+        }
+
+        const startY = fy + fh / 2 - totalH / 2 + lh / 2
+        for (let li = 0; li < lines.length; li++)
+          ctx.fillText(lines[li], fx + fw / 2, startY + li * lh)
         ctx.letterSpacing = '0px'
       }
 

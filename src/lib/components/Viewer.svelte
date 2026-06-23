@@ -1,5 +1,6 @@
 <script lang='ts'>
   import { withBase } from '$lib/config'
+  import { lang, localize, toggleLang } from '$lib/i18n'
   import { closeModal, modalCell } from '$lib/viewer'
   import { fade } from 'svelte/transition'
   import type { WorkMedia } from '$lib/types'
@@ -47,6 +48,7 @@
 
   async function doOpen() {
     clearTids()
+    viewportH = readViewportH()
     screenIn = false
     screenOut = false
     videoSrc = null
@@ -137,6 +139,7 @@
   }
 
   let mediaAspect = $state<number | null>(null)
+  let imgLoaded = $state(false)
   let gateEl = $state<HTMLDivElement | null>(null)
   let gateHeight = $state<number | null>(null)
 
@@ -149,6 +152,7 @@
     void media
     mediaAspect = null
     if (media?.type === 'image') {
+      imgLoaded = false
       const img = new Image()
       img.onload = () => {
         mediaAspect = img.naturalWidth / img.naturalHeight
@@ -158,6 +162,151 @@
   })
 
   let gateWidth = $state(0)
+
+  function readViewportH() {
+    if (typeof window === 'undefined')
+      return 800
+    return window.visualViewport?.height ?? window.innerHeight
+  }
+  let viewportH = $state(readViewportH())
+  let belowEl = $state<HTMLDivElement | null>(null)
+  let belowH = $state(0)
+  const RESERVE_V = 96
+  const maxGateHeight = $derived(Math.max(80, viewportH - belowH - RESERVE_V))
+
+  const MIN_SCALE = 1
+  const MAX_SCALE = 6
+  let zScale = $state(1)
+  let zx = $state(0)
+  let zy = $state(0)
+  let interacting = $state(false)
+
+  const pointers = new Map<number, { x: number, y: number }>()
+  let pinchStartDist = 0
+  let pinchStartScale = 1
+  let isPanning = false
+  let lastX = 0
+  let lastY = 0
+
+  function resetZoom() {
+    zScale = 1
+    zx = 0
+    zy = 0
+  }
+
+  $effect(() => {
+    void media
+    resetZoom()
+  })
+
+  function clampPan() {
+    const maxX = (zScale - 1) * gateWidth / 2
+    const maxY = (zScale - 1) * (gateHeight ?? 0) / 2
+    zx = Math.max(-maxX, Math.min(maxX, zx))
+    zy = Math.max(-maxY, Math.min(maxY, zy))
+  }
+
+  function zoomAt(cx: number, cy: number, next: number) {
+    next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, next))
+    if (next === zScale)
+      return
+    const ratio = next / zScale
+    zx = cx - (cx - zx) * ratio
+    zy = cy - (cy - zy) * ratio
+    zScale = next
+    if (zScale === 1) {
+      zx = 0
+      zy = 0
+    } else {
+      clampPan()
+    }
+  }
+
+  function localPoint(e: { clientX: number, clientY: number, currentTarget: EventTarget | null }) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    return {
+      x: e.clientX - rect.left - rect.width / 2,
+      y: e.clientY - rect.top - rect.height / 2,
+    }
+  }
+
+  function onWheel(e: WheelEvent) {
+    if (media?.type !== 'image')
+      return
+    e.preventDefault()
+    const p = localPoint(e)
+    zoomAt(p.x, p.y, zScale * (e.deltaY < 0 ? 1.15 : 1 / 1.15))
+  }
+
+  function onDblClick(e: MouseEvent) {
+    if (media?.type !== 'image')
+      return
+    if (zScale > 1) {
+      resetZoom()
+    } else {
+      const p = localPoint(e)
+      zoomAt(p.x, p.y, 2.5)
+    }
+  }
+
+  function onPointerDown(e: PointerEvent) {
+    if (media?.type !== 'image')
+      return
+    e.preventDefault()
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    interacting = true
+    if (pointers.size === 1) {
+      isPanning = zScale > 1
+      lastX = e.clientX
+      lastY = e.clientY
+    } else if (pointers.size === 2) {
+      isPanning = false
+      const pts = [...pointers.values()]
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+      pinchStartScale = zScale
+    }
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    if (!pointers.has(e.pointerId))
+      return
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.size === 2 && pinchStartDist > 0) {
+      const pts = [...pointers.values()]
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+      const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * dist / pinchStartDist))
+      zScale = next
+      if (zScale === 1) {
+        zx = 0
+        zy = 0
+      } else {
+        clampPan()
+      }
+    } else if (isPanning && pointers.size === 1) {
+      zx += e.clientX - lastX
+      zy += e.clientY - lastY
+      lastX = e.clientX
+      lastY = e.clientY
+      clampPan()
+    }
+  }
+
+  function onPointerUp(e: PointerEvent) {
+    pointers.delete(e.pointerId)
+    if (pointers.size < 2)
+      pinchStartDist = 0
+    if (pointers.size === 1) {
+      const p = [...pointers.values()][0]
+      isPanning = zScale > 1
+      lastX = p.x
+      lastY = p.y
+    }
+    if (pointers.size === 0) {
+      isPanning = false
+      interacting = false
+    }
+  }
 
   $effect(() => {
     const el = gateEl
@@ -174,20 +323,39 @@
   })
 
   $effect(() => {
+    const el = belowEl
+    if (!el)
+      return
+    const ro = new ResizeObserver(entries => {
+      belowH = entries[0]?.contentRect.height ?? 0
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  })
+
+  $effect(() => {
     const w = gateWidth
     const aspect = mediaAspect ?? (16 / 9)
+    const cap = maxGateHeight
     if (w > 0)
-      gateHeight = w / aspect
+      gateHeight = Math.min(w / aspect, cap)
   })
 
   const showBackdrop = $derived(phase !== 'idle')
 
+  const mediaDescription = $derived(localize(media?.description, $lang))
+
+  const workHasDescription = $derived(
+    !!displayWork
+    && [displayWork.main, ...(displayWork.wip ?? [])].some(m => !!m.description),
+  )
+
   function reelName(wip: WorkMedia, i: number): string {
-    return wip.name ?? wip.caption ?? `WIP ${i + 1}`
+    return wip.name ?? (localize(wip.caption, $lang) || `WIP ${i + 1}`)
   }
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onresize={() => { viewportH = readViewportH() }} />
 
 {#if showBackdrop}
   <div
@@ -262,8 +430,50 @@
         {/if}
 
         {#if media?.type === 'image'}
-          <div class='media-layer'>
-            <img src={withBase(media.src)} alt={displayWork?.title ?? ''} class='media-img' draggable='false' />
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class='media-layer media-layer--zoom'
+            style:cursor={zScale > 1 ? (interacting ? 'grabbing' : 'grab') : 'zoom-in'}
+            onwheel={onWheel}
+            ondblclick={onDblClick}
+            onpointerdown={onPointerDown}
+            onpointermove={onPointerMove}
+            onpointerup={onPointerUp}
+            onpointercancel={onPointerUp}
+          >
+            <img
+              src={withBase(media.src)}
+              alt={displayWork?.title ?? ''}
+              class='media-img'
+              class:media-img--hidden={!imgLoaded}
+              draggable='false'
+              onload={() => { imgLoaded = true }}
+              style={`transform: translate(${zx}px, ${zy}px) scale(${zScale}); transition: ${interacting ? 'none' : 'transform 0.18s ease'};`}
+            />
+          </div>
+        {/if}
+
+        {#if media?.type === 'image' && !imgLoaded}
+          <div class='loading' aria-live='polite'>
+            <svg
+              class='loading__reel'
+              viewBox='0 0 200 200'
+              width='72'
+              height='72'
+              aria-hidden='true'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <circle cx='100' cy='100' r='96' class='reel-body' />
+              {#each { length: 6 } as _, i}
+                <circle cx='100' cy='40' r='26' class='reel-hole' transform={`rotate(${i * 60} 100 100)`} />
+              {/each}
+              <circle cx='100' cy='100' r='24' class='reel-core' />
+              {#each { length: 6 } as _, i}
+                <circle cx='100' cy='78' r='5' class='reel-bolt' transform={`rotate(${i * 60} 100 100)`} />
+              {/each}
+              <circle cx='100' cy='100' r='10' class='reel-center' />
+            </svg>
+            <span class='loading__label'>LOADING</span>
           </div>
         {/if}
 
@@ -275,48 +485,67 @@
 
       </div>
 
+      <div class='below' bind:this={belowEl}>
       <div class='data-strip'>
         <div class='data-col data-col--left'>
           <span class='data-value'>{displayWork?.title ?? '—'}</span>
-        </div>
-        <div class='data-col data-col--right'>
           {#if displayWork?.year}
-            <span class='data-value'>{displayWork.year}</span>
+            <span class='data-value data-value--year'>{displayWork.year}</span>
           {/if}
         </div>
-      </div>
 
-      {#if displayWork?.wip?.length}
-        <div class='reel-bar' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => e.stopPropagation()}>
+        {#if displayWork?.wip?.length || workHasDescription}
+          <div class='data-col data-col--right reel-tabs' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => e.stopPropagation()}>
 
-          <button
-            class='reel-btn'
-            class:reel-btn--active={mediaIndex === -1}
-            onclick={() => {
-              mediaIndex = -1
-            }}
-            type='button'
-          >
-            <span class='reel-btn__led' aria-hidden='true'></span>
-            <span class='reel-btn__name'>REEL</span>
-          </button>
+            {#if workHasDescription}
+              <button
+                class='reel-btn lang-btn'
+                onclick={e => {
+                  e.stopPropagation()
+                  toggleLang()
+                }}
+                aria-label={$lang === 'ru' ? 'Switch to English' : 'Переключить на русский'}
+                type='button'
+              >
+                <span class='lang-btn__opt lang-btn__opt--en' class:lang-btn__opt--on={$lang === 'en'}>EN</span>
+                <span class='lang-btn__opt lang-btn__opt--ru' class:lang-btn__opt--on={$lang === 'ru'}>RU</span>
+              </button>
+            {/if}
 
-          {#each displayWork.wip as wip, i}
+            {#if displayWork?.wip?.length}
             <button
               class='reel-btn'
-              class:reel-btn--active={mediaIndex === i}
+              class:reel-btn--active={mediaIndex === -1}
               onclick={() => {
-                mediaIndex = i
+                mediaIndex = -1
               }}
+              aria-label='Reel'
               type='button'
-            >
-              <span class='reel-btn__led' aria-hidden='true'></span>
-              <span class='reel-btn__name'>{reelName(wip, i)}</span>
-            </button>
-          {/each}
+            >1</button>
 
+            {#each displayWork.wip as wip, i}
+              <button
+                class='reel-btn'
+                class:reel-btn--active={mediaIndex === i}
+                onclick={() => {
+                  mediaIndex = i
+                }}
+                aria-label={reelName(wip, i)}
+                type='button'
+              >{i + 2}</button>
+            {/each}
+            {/if}
+
+          </div>
+        {/if}
+      </div>
+
+      {#if mediaDescription}
+        <div class='desc-strip'>
+          <p class='desc-text'>{mediaDescription}</p>
         </div>
       {/if}
+      </div>
 
     </div>
   </div>
@@ -354,7 +583,7 @@
 
   .screen-wrap {
     position: relative;
-    width: min(80vw, 660px);
+    width: min(660px, calc(min(100vw, 100dvh * (2 / 3)) - 46px));
     cursor: default;
     z-index: 1;
     opacity: 0;
@@ -437,6 +666,20 @@
     z-index: 2;
   }
 
+  .media-layer--zoom {
+    touch-action: none;
+    z-index: 6;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .media-layer--zoom .media-img {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   .media-video {
     width: 100%;
     height: 100%;
@@ -450,6 +693,57 @@
     height: 100%;
     object-fit: contain;
     display: block;
+  }
+
+  .media-img--hidden {
+    opacity: 0;
+  }
+
+  .loading {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    pointer-events: none;
+  }
+
+  .loading__reel {
+    animation: loading-spin 3.6s linear infinite;
+  }
+
+  .loading__reel .reel-body {
+    fill: var(--color-secondary);
+    filter:
+      drop-shadow(0 0 6px rgba(223,225,215,0.08))
+      drop-shadow(0 0 2px rgba(0,0,0,0.4));
+  }
+
+  .loading__reel .reel-hole   { fill: var(--color-primary); }
+  .loading__reel .reel-core   { fill: var(--color-secondary); }
+  .loading__reel .reel-bolt   { fill: var(--color-primary); }
+  .loading__reel .reel-center { fill: var(--color-primary); }
+
+  .loading__label {
+    font-family: var(--font-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(223, 225, 215, 0.55);
+    animation: loading-blink 1.1s ease-in-out infinite;
+  }
+
+  @keyframes loading-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes loading-blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
   }
 
   .scanlines {
@@ -501,7 +795,7 @@
 
   .data-col {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 8px;
     overflow: hidden;
   }
@@ -520,66 +814,110 @@
       0 2px 4px rgba(0,0,0,0.25);
   }
 
-  .reel-bar {
+  .data-value--year {
+    color: rgba(223,225,215,0.4);
+    text-shadow: none;
+  }
+
+  .lang-btn {
+    position: relative;
+    padding: 0;
+    font-family: var(--font-main);
+    overflow: hidden;
+  }
+
+  .lang-btn__opt {
+    position: absolute;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: rgba(223,225,215,0.34);
+    transition: color 0.14s, text-shadow 0.14s;
+  }
+
+  .lang-btn__opt--en {
+    top: 6px;
+    left: 7px;
+  }
+
+  .lang-btn__opt--ru {
+    bottom: 6px;
+    right: 7px;
+  }
+
+  .lang-btn__opt--on {
+    color: rgba(245,243,232,0.95);
+    text-shadow: 0 0 7px rgba(223,225,215,0.45);
+  }
+
+  .lang-btn:focus-visible {
+    outline: 1px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  .desc-strip {
     background: var(--color-primary);
-    border-top: 1px solid rgba(223,225,215,0.06);
-    display: flex;
-    gap: 4px;
+    border-top: 1px solid rgba(223,225,215,0.07);
+    padding: 12px 16px 14px;
+  }
+
+  .desc-text {
+    margin: 0;
+    max-width: 64ch;
+    font-family: var(--font-main), var(--font-body);
+    font-size: clamp(1.0625rem, 0.864rem + 0.398vw, 1.5rem);
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    color: rgba(223, 225, 215, 0.55);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .reel-tabs {
+    flex-shrink: 0;
     flex-wrap: wrap;
-    padding: 10px 16px 12px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    overflow: visible;
   }
 
   .reel-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 7px;
-    font-family: var(--font-secondary);
-    font-size: clamp(0.75rem, 0.636rem + 0.227vw, 1rem);
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgba(223,225,215,0.3);
-    background: none;
-    border: 1px solid rgba(223,225,215,0.08);
-    padding: 10px 18px 10px;
-    cursor: pointer;
-    min-width: 80px;
-    transition: color 0.14s, border-color 0.14s, background 0.14s;
-    position: relative;
-  }
-
-  .reel-btn__led {
-    display: block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(223,225,215,0.14);
-    flex-shrink: 0;
-    transition: background 0.14s, box-shadow 0.14s;
-  }
-
-  .reel-btn__name {
+    justify-content: center;
+    font-family: var(--font-main);
+    font-size: 1.5rem;
     line-height: 1;
-  }
-
-  .reel-btn--active {
-    color: rgba(223,225,215,0.88);
-    border-color: rgba(223,225,215,0.28);
-    background: rgba(223,225,215,0.05);
-  }
-
-  .reel-btn--active .reel-btn__led {
-    background: rgba(223,225,215,0.9);
-    box-shadow: 0 0 7px rgba(223,225,215,0.5);
+    letter-spacing: 0.04em;
+    color: rgba(223,225,215,0.38);
+    background: rgba(223,225,215,0.02);
+    border: 1px solid rgba(223,225,215,0.12);
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.16s, border-color 0.16s, background 0.16s, box-shadow 0.16s;
   }
 
   .reel-btn:hover:not(.reel-btn--active) {
-    color: rgba(223,225,215,0.55);
-    border-color: rgba(223,225,215,0.18);
+    color: rgba(223,225,215,0.7);
+    border-color: rgba(223,225,215,0.3);
+    background: rgba(223,225,215,0.05);
   }
 
-  .reel-btn:hover:not(.reel-btn--active) .reel-btn__led {
-    background: rgba(223,225,215,0.35);
+  .reel-btn--active {
+    color: rgba(245,243,232,0.96);
+    border-color: rgba(223,225,215,0.55);
+    background: rgba(223,225,215,0.08);
+    text-shadow: 0 0 8px rgba(223,225,215,0.55);
+    box-shadow:
+      0 0 12px rgba(223,225,215,0.22),
+      inset 0 0 10px rgba(223,225,215,0.1);
+  }
+
+  .reel-btn:focus-visible {
+    outline: 1px solid var(--color-secondary);
+    outline-offset: 2px;
   }
 </style>

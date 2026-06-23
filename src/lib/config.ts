@@ -19,23 +19,17 @@ export const APP_CONFIG = {
     youtube: 'https://youtube.com/@insomniaCR',
     artstation: 'https://artstation.com/fiecher',
     telegramChannel: 'https://t.me/fiecherWorks',
+    behance: 'https://www.behance.net/fiecher',
+    twitter: 'https://x.com/InsomniaCR_',
+    bluesky: 'https://bsky.app/profile/fiecher.bsky.social',
+    instagram: 'https://www.instagram.com/fiecher_works/',
+    newgrounds: 'https://fiecher.newgrounds.com/',
+    reddit: 'https://www.reddit.com/user/InsomniaCR/',
+    tiktok: 'https://www.tiktok.com/@fiecher_works',
   },
 } as const
 
 export default APP_CONFIG
-
-/* ──────────────────────────────
-     static/works/<work-id>/
-       main.mp4      ← main video
-       poster.png    ← preview (required for video)
-       wip-01.jpg    ← WIP materials (optional)
-
-     id          — unique id
-     title       — work title
-     year        — year (optional)
-     main        — main media file
-     wip         — array of WIP materials (optional)
-────────────────────────────── */
 
 export const WORKS: Work[] = [
   {
@@ -46,6 +40,10 @@ export const WORKS: Work[] = [
       type: 'image',
       src: '/works/deadlock-doorman/Render.jpg',
       poster: '/works/deadlock-doorman/Preview.jpg',
+      description: {
+        ru: 'Бла.',
+        en: 'Blah.',
+      },
     },
     wip: [
       {
@@ -127,9 +125,6 @@ export const WORKS: Work[] = [
     wip: [{
       type: 'image',
       src: '/works/insomnia-logo/color-variants.jpg',
-    }, {
-      type: 'image',
-      src: '/works/insomnia-logo/versions.jpg',
     }],
   },
   {
@@ -187,6 +182,16 @@ export const WORKS: Work[] = [
       type: 'image',
       src: '/works/control-casper_darling/WIP2.jpg',
     }],
+  },
+  {
+    id: 'zavodchane-promo',
+    title: 'BIZ Agent Promo',
+    year: 2026,
+    main: {
+      type: 'video',
+      src: '/works/zavodchane-promo/Main.mp4',
+      poster: '/works/zavodchane-promo/Preview.jpg',
+    },
   },
 ]
 
