@@ -55,8 +55,8 @@ export const WORKS: Work[] = [
         type: 'image',
         src: '/works/deadlock-doorman/Reddit.jpg',
         description: {
-          ru: 'Случайный пользователь Reddit настолько вдохновился моей работой, что решил увековечить её в виде татуировки.',
-          en: 'A random Reddit user was so inspired by my work that they decided to immortalize it as a tattoo.',
+          ru: 'Случайный пользователь Reddit настолько вдохновился моей работой, что решил увековечить её в виде [татуировки](https://www.reddit.com/r/DeadlockTheGame/comments/1tw4rw3/doorman_tattoo/?share_id=dcuP9JhBwoO4X_W9THyYy).',
+          en: 'A random Reddit user was so inspired by my work that they decided to immortalize it as a [tattoo](https://www.reddit.com/r/DeadlockTheGame/comments/1tw4rw3/doorman_tattoo/?share_id=dcuP9JhBwoO4X_W9THyYy).',
         },
       },
     ],
@@ -186,6 +186,13 @@ export const WORKS: Work[] = [
     }, {
       type: 'image',
       src: '/works/control-casper_darling/WIP2.jpg',
+    }, {
+      type: 'image',
+      src: '/works/control-casper_darling/Website.jpg',
+      description: {
+        ru: 'Работа опубликована на [официальном сайте](https://community.remedygames.com/game/control/) Remedy Entertainment (разработчики Control).',
+        en: 'Artwork featured on the [official website](https://community.remedygames.com/game/control/) of Remedy Entertainment (developers of Control).',
+      },
     }],
   },
   {

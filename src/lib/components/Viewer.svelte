@@ -374,6 +374,36 @@
 
   const mediaDescription = $derived(localize(media?.description, $lang))
 
+  type DescPart = { text: string, href?: string }
+
+  function linkify(text: string): DescPart[] {
+    const parts: DescPart[] = []
+    const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/g
+    let last = 0
+    let m: RegExpExecArray | null
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last)
+        parts.push({ text: text.slice(last, m.index) })
+      if (m[1] && m[2]) {
+        parts.push({ text: m[1], href: m[2] })
+      } else if (m[3]) {
+        let url = m[3]
+        const trail = url.match(/[.,!?;:]+$/)?.[0] ?? ''
+        if (trail)
+          url = url.slice(0, -trail.length)
+        parts.push({ text: url, href: url })
+        if (trail)
+          parts.push({ text: trail })
+      }
+      last = re.lastIndex
+    }
+    if (last < text.length)
+      parts.push({ text: text.slice(last) })
+    return parts
+  }
+
+  const descParts = $derived(linkify(mediaDescription))
+
   const workHasDescription = $derived(
     !!displayWork
     && [displayWork.main, ...(displayWork.wip ?? [])].some(m => !!m.description),
@@ -573,7 +603,7 @@
 
       {#if mediaDescription}
         <div class='desc-strip'>
-          <p class='desc-text'>{mediaDescription}</p>
+          <p class='desc-text'>{#each descParts as part}{#if part.href}<a class='desc-link' href={part.href} target='_blank' rel='noopener noreferrer'>{part.text}</a>{:else}{part.text}{/if}{/each}</p>
         </div>
       {/if}
       </div>
@@ -913,6 +943,17 @@
     color: rgba(223, 225, 215, 0.55);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  .desc-link {
+    color: var(--color-secondary);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-color: rgba(223, 225, 215, 0.4);
+    transition: text-decoration-color 0.2s ease;
+  }
+  .desc-link:hover {
+    text-decoration-color: var(--color-secondary);
   }
 
   .reel-tabs {
