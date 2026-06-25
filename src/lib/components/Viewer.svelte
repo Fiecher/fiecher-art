@@ -410,7 +410,7 @@
       aria-modal='true'
       aria-label={displayWork?.title ?? 'Work preview'}
       onclick={e => e.stopPropagation()}
-      onkeydown={e => e.stopPropagation()}
+      onkeydown={e => { if (e.key !== 'Escape') e.stopPropagation() }}
     >
 
       <div class='corner corner--tl' aria-hidden='true'></div>
@@ -524,7 +524,7 @@
         </div>
 
         {#if displayWork?.wip?.length || workHasDescription}
-          <div class='data-col data-col--right reel-tabs' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => e.stopPropagation()}>
+          <div class='data-col data-col--right reel-tabs' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => { if (e.key !== 'Escape') e.stopPropagation() }}>
 
             {#if workHasDescription}
               <button
