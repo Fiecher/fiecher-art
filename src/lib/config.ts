@@ -40,10 +40,7 @@ export const WORKS: Work[] = [
       type: 'image',
       src: '/works/deadlock-doorman/Render.jpg',
       poster: '/works/deadlock-doorman/Preview.jpg',
-      description: {
-        ru: 'Бла.',
-        en: 'Blah.',
-      },
+
     },
     wip: [
       {
@@ -53,6 +50,14 @@ export const WORKS: Work[] = [
       {
         type: 'image',
         src: '/works/deadlock-doorman/WIP2.jpg',
+      },
+      {
+        type: 'image',
+        src: '/works/deadlock-doorman/Reddit.jpg',
+        description: {
+          ru: 'Случайный пользователь Reddit настолько вдохновился моей работой, что решил увековечить её в виде татуировки.',
+          en: 'A random Reddit user was so inspired by my work that they decided to immortalize it as a tattoo.',
+        },
       },
     ],
   },

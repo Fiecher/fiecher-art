@@ -379,6 +379,8 @@
     && [displayWork.main, ...(displayWork.wip ?? [])].some(m => !!m.description),
   )
 
+  const currentHasDescription = $derived(!!media?.description)
+
   function reelName(wip: WorkMedia, i: number): string {
     return wip.name ?? (localize(wip.caption, $lang) || `WIP ${i + 1}`)
   }
@@ -526,7 +528,7 @@
         {#if displayWork?.wip?.length || workHasDescription}
           <div class='data-col data-col--right reel-tabs' role='toolbar' aria-label='Select reel' tabindex='0' onclick={e => e.stopPropagation()} onkeydown={e => { if (e.key !== 'Escape') e.stopPropagation() }}>
 
-            {#if workHasDescription}
+            {#if currentHasDescription}
               <button
                 class='reel-btn lang-btn'
                 onclick={e => {
