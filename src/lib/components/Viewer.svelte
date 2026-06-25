@@ -333,6 +333,35 @@
     return () => ro.disconnect()
   })
 
+  let yearEl = $state<HTMLSpanElement | null>(null)
+  let yearHidden = $state(false)
+
+  function measureYear() {
+    const el = yearEl
+    if (!el)
+      return
+    yearHidden = el.scrollWidth > el.clientWidth + 1
+  }
+
+  $effect(() => {
+    void displayWork
+    const el = yearEl
+    if (!el)
+      return
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(measureYear)
+    }
+    const ro = new ResizeObserver(schedule)
+    ro.observe(el)
+    schedule()
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(raf)
+    }
+  })
+
   $effect(() => {
     const w = gateWidth
     const aspect = mediaAspect ?? (16 / 9)
@@ -490,7 +519,7 @@
         <div class='data-col data-col--left'>
           <span class='data-value'>{displayWork?.title ?? '—'}</span>
           {#if displayWork?.year}
-            <span class='data-value data-value--year'>{displayWork.year}</span>
+            <span class='data-value data-value--year' class:data-value--year-gone={yearHidden} bind:this={yearEl}>{String(displayWork.year).slice(0, 2)}<wbr>{String(displayWork.year).slice(2)}</span>
           {/if}
         </div>
 
@@ -817,6 +846,17 @@
   .data-value--year {
     color: rgba(223,225,215,0.4);
     text-shadow: none;
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: keep-all;
+    text-align: center;
+    line-height: 0.9;
+  }
+
+  .data-value--year-gone {
+    visibility: hidden;
   }
 
   .lang-btn {
