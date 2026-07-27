@@ -12,10 +12,8 @@
     { role: '', name: 'ArtStation', href: APP_CONFIG.social.artstation },
   ]
   const EXTRA: Credit[] = [
-    { role: '', name: 'Behance', href: APP_CONFIG.social.behance },
     { role: '', name: 'Twitter', href: APP_CONFIG.social.twitter },
     { role: '', name: 'BlueSky', href: APP_CONFIG.social.bluesky },
-    { role: '', name: 'Instagram', href: APP_CONFIG.social.instagram },
     { role: '', name: 'NewGrounds', href: APP_CONFIG.social.newgrounds },
     { role: '', name: 'Reddit', href: APP_CONFIG.social.reddit },
     { role: '', name: 'TikTok', href: APP_CONFIG.social.tiktok },
