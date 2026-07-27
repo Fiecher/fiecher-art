@@ -19,7 +19,6 @@ export const APP_CONFIG = {
     youtube: 'https://youtube.com/@insomniaCR',
     artstation: 'https://artstation.com/fiecher',
     telegramChannel: 'https://t.me/fiecherWorks',
-    behance: 'https://www.behance.net/fiecher',
     twitter: 'https://x.com/FiecherWorks',
     bluesky: 'https://bsky.app/profile/fiecher.bsky.social',
     newgrounds: 'https://fiecher.newgrounds.com/',
