@@ -22,7 +22,6 @@ export const APP_CONFIG = {
     behance: 'https://www.behance.net/fiecher',
     twitter: 'https://x.com/FiecherWorks',
     bluesky: 'https://bsky.app/profile/fiecher.bsky.social',
-    instagram: 'https://www.instagram.com/fiecher_works/',
     newgrounds: 'https://fiecher.newgrounds.com/',
     reddit: 'https://www.reddit.com/user/InsomniaCR/',
     tiktok: 'https://www.tiktok.com/@fiecher_works',
