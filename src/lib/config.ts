@@ -227,22 +227,22 @@ export const WORKS: Work[] = [
       type: 'image',
       src: '/works/gmtk-2026/Render.jpg',
       description: {
-        ru: 'Игра опубликована на [GMTK Game Jam 2026]https://itch.io/jam/gmtk-jam-2026/rate/4810019) и получила высокие оценки и положительные отзывы за визуальный стиль',
+        ru: 'Игра опубликована на [GMTK Game Jam 2026](https://itch.io/jam/gmtk-jam-2026/rate/4810019) и получила высокие оценки и положительные отзывы за визуальный стиль',
         en: 'The game was published as part of [GMTK Game Jam 2026](https://itch.io/jam/gmtk-jam-2026/rate/4810019) and received high ratings and positive feedback for its visual style.',
       },
     },
     wip: [{
       type: 'image',
-      src: '/works/gmtk-2026/Screenshot1.jpg',
+      src: '/works/gmtk-2026/Screenshot1.png',
     }, {
       type: 'image',
-      src: '/works/gmtk-2026/Screenshot2.jpg',
+      src: '/works/gmtk-2026/Screenshot2.png',
     }, {
       type: 'image',
-      src: '/works/gmtk-2026/Screenshot3.jpg',
+      src: '/works/gmtk-2026/Screenshot3.png',
     }, {
       type: 'image',
-      src: '/works/gmtk-2026/Screenshot4.jpg',
+      src: '/works/gmtk-2026/Screenshot4.png',
     }],
   },
 ]
