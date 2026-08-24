@@ -149,14 +149,14 @@ export const WORKS: Work[] = [
     title: 'Flowery Model',
     year: 2026,
     main: {
-      type: 'image',
-      src: '/works/deltarune-flowery/Render.jpg',
+      type: 'video',
+      src: '/works/deltarune-flowery/Turnaround.mp4',
       poster: '/works/deltarune-flowery/Preview.jpg',
     },
     wip: [
       {
-        type: 'video',
-        src: '/works/deltarune-flowery/Turnaround.mp4',
+        type: 'image',
+        src: '/works/deltarune-flowery/Render.jpg',
       },
     ],
   },
