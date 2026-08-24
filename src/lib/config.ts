@@ -219,6 +219,32 @@ export const WORKS: Work[] = [
       poster: '/works/zavodchane-promo/Preview.jpg',
     },
   },
+  {
+    id: 'gmtk-2026',
+    title: 'UPS Fever Game Assets',
+    year: 2026,
+    main: {
+      type: 'image',
+      src: '/works/gmtk-2026/Render.jpg',
+      description: {
+        ru: 'Игра опубликована на [GMTK Game Jam 2026]https://itch.io/jam/gmtk-jam-2026/rate/4810019) и получила высокие оценки и положительные отзывы за визуальный стиль',
+        en: 'The game was published as part of [GMTK Game Jam 2026](https://itch.io/jam/gmtk-jam-2026/rate/4810019) and received high ratings and positive feedback for its visual style.',
+      },
+    },
+    wip: [{
+      type: 'image',
+      src: '/works/gmtk-2026/Screenshot1.jpg',
+    }, {
+      type: 'image',
+      src: '/works/gmtk-2026/Screenshot2.jpg',
+    }, {
+      type: 'image',
+      src: '/works/gmtk-2026/Screenshot3.jpg',
+    }, {
+      type: 'image',
+      src: '/works/gmtk-2026/Screenshot4.jpg',
+    }],
+  },
 ]
 
 export const WORK_PAGE_COUNT = Math.max(1, Math.ceil(WORKS.length / 4))
