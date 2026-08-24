@@ -145,6 +145,22 @@ export const WORKS: Work[] = [
     }],
   },
   {
+    id: 'deltarune-flowery',
+    title: 'Flowery Model',
+    year: 2026,
+    main: {
+      type: 'image',
+      src: '/works/deltarune-flowery/Render.jpg',
+      poster: '/works/deltarune-flowery/Preview.jpg',
+    },
+    wip: [
+      {
+        type: 'video',
+        src: '/works/deltarune-flowery/TurnAround.mp4',
+      },
+    ],
+  },
+  {
     id: 'revolution-br',
     title: 'Revolution BR Teaser',
     year: 2021,
