@@ -156,7 +156,7 @@ export const WORKS: Work[] = [
     wip: [
       {
         type: 'video',
-        src: '/works/deltarune-flowery/TurnAround.mp4',
+        src: '/works/deltarune-flowery/Turnaround.mp4',
       },
     ],
   },
