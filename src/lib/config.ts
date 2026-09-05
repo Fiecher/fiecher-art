@@ -36,6 +36,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'image',
+      thumb: '/works/deadlock-doorman/thumb.jpg',
       src: '/works/deadlock-doorman/Render.jpg',
       poster: '/works/deadlock-doorman/Preview.jpg',
 
@@ -65,6 +66,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'video',
+      thumb: '/works/symptom-disturbia/thumb.jpg',
       src: '/works/symptom-disturbia/Disturbia.mp4',
       poster: '/works/symptom-disturbia/Preview.png',
     },
@@ -85,6 +87,7 @@ export const WORKS: Work[] = [
     year: 2025,
     main: {
       type: 'video',
+      thumb: '/works/symptom-bulletin/thumb.jpg',
       src: '/works/symptom-bulletin/TheBulletin.mp4',
       poster: '/works/symptom-bulletin/Preview.png',
     },
@@ -102,6 +105,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'video',
+      thumb: '/works/tv/thumb.jpg',
       src: '/works/tv/Render.mp4',
       poster: '/works/tv/Preview.jpg',
     },
@@ -112,6 +116,7 @@ export const WORKS: Work[] = [
     year: 2023,
     main: {
       type: 'video',
+      thumb: '/works/soft-studio/thumb.jpg',
       src: '/works/soft-studio/SoftStudio.mp4',
       poster: '/works/soft-studio/Preview.jpg',
     },
@@ -122,6 +127,7 @@ export const WORKS: Work[] = [
     year: 2023,
     main: {
       type: 'video',
+      thumb: '/works/insomnia-logo/thumb.jpg',
       src: '/works/insomnia-logo/Insomnia.mp4',
       poster: '/works/insomnia-logo/Preview.jpg',
     },
@@ -136,6 +142,7 @@ export const WORKS: Work[] = [
     year: 2021,
     main: {
       type: 'video',
+      thumb: '/works/nosweat-logo/thumb.jpg',
       src: '/works/nosweat-logo/NoSweat.mp4',
       poster: '/works/nosweat-logo/Preview.jpg',
     },
@@ -150,6 +157,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'video',
+      thumb: '/works/deltarune-flowery/thumb.jpg',
       src: '/works/deltarune-flowery/Turnaround.mp4',
       poster: '/works/deltarune-flowery/Preview.jpg',
     },
@@ -166,6 +174,7 @@ export const WORKS: Work[] = [
     year: 2021,
     main: {
       type: 'video',
+      thumb: '/works/revolution-br/thumb.jpg',
       src: '/works/revolution-br/RevolutionBR.mp4',
       poster: '/works/revolution-br/Preview.jpg',
     },
@@ -183,6 +192,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'image',
+      thumb: '/works/commander-tartar/thumb.jpg',
       src: '/works/commander-tartar/Preview.png',
     },
   },
@@ -192,6 +202,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'image',
+      thumb: '/works/control-casper_darling/thumb.jpg',
       src: '/works/control-casper_darling/Preview.jpg',
     },
     wip: [{
@@ -215,6 +226,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'video',
+      thumb: '/works/zavodchane-promo/thumb.jpg',
       src: '/works/zavodchane-promo/Main.mp4',
       poster: '/works/zavodchane-promo/Preview.jpg',
     },
@@ -225,6 +237,7 @@ export const WORKS: Work[] = [
     year: 2026,
     main: {
       type: 'image',
+      thumb: '/works/gmtk-2026/thumb.jpg',
       src: '/works/gmtk-2026/Render.jpg',
       description: {
         ru: 'Игра опубликована на [GMTK Game Jam 2026](https://itch.io/jam/gmtk-jam-2026/rate/4810019) и получила высокие оценки и положительные отзывы за визуальный стиль',

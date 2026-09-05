@@ -15,7 +15,7 @@
   const allCells = WORKS.map(w => ({
     id: w.id,
     title: w.title,
-    image: withBase(w.main.poster ?? w.main.src),
+    image: withBase(w.main.thumb ?? w.main.poster ?? w.main.src),
   }))
   const half = Math.ceil(allCells.length / 2)
   const topCells = allCells.slice(0, half)
